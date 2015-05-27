@@ -8,7 +8,9 @@ excerpt: An unplanned bivouac on Ben Nevis.
 ---
 #+END_HTML
 
-a wealth of documentation, but currently they are profoundly decentralized and challenging for even an advanced user to locate, navigate, and identify as up-to-date and accurate.
+* How does this help us?
+
+Modern day software aided projects often have a wealth of documentation for using the platform and trouble-shooting the problems withing. This exists in formal documentation for the project, and the formal documentation for all its software and hardware dependencies, in-line code documentation, list-serv's, IRC chats, google docs, wiki's, meeting notes, and a variety of other informal methods such as post-its and "just ask Georgia". Sadly most projects documentation is are profoundly decentralized and challenging for even an advanced user to locate, navigate, and identify as up-to-date and accurate. Newer users, who are best positioned to write "new user & installation guides" are even worse off. They have to learn a myriad issue submission, or publication platforms before they can contribute documentation help or edits as well as identify the rarely documented social conventions required to get their submission acted upon. By this time they are no longer new users, and have lost much of the key experience that makes their input so valuable. 
 
 Documentation needs to make it easy for users, partners, and future collaborators to consume, update, customize, localize, and translate. More so, truly good documentation does all this automatically and consistently over time leading to an iterative stewardship process instead of a sporadic process of massive re-reading and re-writes.
 
