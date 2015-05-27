@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <meta name="description" content="Seamus Tuohy's Website" />
+  <meta name="keywords" content="code,mesh,peace,software,dialogue,facilitation" />
+  <meta name="author" content="Seamus Tuohy" />
+  <link rel="stylesheet" type="text/css" href="/assets/css/main.css" />
+  <script src="/assets/js/social.js" charset="utf-8"></script>
+  <script src="/assets/js/visual.js" charset="utf-8"></script>
+  <title>Seamus Tuohy - A website</title>
+</head>
+
+<body>
+  <div id="wrap">
+    <div id="header">
+    	 <p id="toplinks">
+	      </p>
+		<div class="slogan">
+		       <a href="/writing.html" class="blue">writing</a> ||
+		       <a href="/"class="white">s2e</a> ||
+		       <a href="/projects.html" class="orange">projects</a>
+                </div>
+    </div>
+
+<div id="content">
+  <div id="title">
+  <h2>Nmap cardiology using nmap scripting to test the heartbleed bug</h2>
+</div>
+
+<div id="post">
+<p>A few days ago the <a href="http://heartbleed.com/">Heartbleed bug</a> came out which allowed attackers to read the memory of systems using a vulnerable version of OpenSSL. <em>Reading the memmory</em> will allow attackers to steal even the encryption keys which make <em>all<em/> secure traffic <em>ever</em> monitored to and from one of these systems decryptable. But, that happened a whole two days ago (as of when I put fingers to keyboard on this piece). If you are reading this blog, you probobly know that. So, what I decided to do this morning is to build a script to identify, and notify, vulnerable systems.
+
+<p>I have wanted to use the <a href="http://nmap.org/">Nmap<a/> <a href="http://nmap.org/book/nse.html"> scripting engine</a> for quite some time now. Nmap is a (========EXPLAIN WHAT IS NMAP HERE======). I enjoy using Nmap, but I find the command line flags cumborsom. Nmap implemented a <a href="http://www.lua.org/">Lua</a> based scripting engine in 2007. (=========WHY ME, WHY LUA, WHY FUN=======).</p>
+
+<p>To start I need to gather my tools. Nmap has a robust <a href="http://nmap.org/nsedoc/">script library</a> already, and I don't want to write what I don't have to. Heartbleed was orginally released on April 7th 2014.  It is 7:50am on April 9th and there is already a Heartbleed vulnerability scripted up and uploaded to the script library... I am as dissapointed as you are. But, since this was supposed to simply be a nmap scripting lesson, and open source is rooted in reuse, we are not going to re-implement this from scratch. Instead, we are going to use this script to make a vulnerability notifier.</p>
+
+<p>The first thing we need to do is set up our script. This simply means that I write a description, author information, licsence, and assign this script to a set of categories. 
+
+<pre>
+description = [[
+Identifies servers who are vulnerable to heartbleed and then notifies the current owner of the ip address with an e-mail. 
+]]
+
+author = "Seamus Tuohy <s2e@seamustuohy.com>"
+license = "Same as Nmap--See http://nmap.org/book/man-legal.html"
+categories = { "vuln", "safe", "discovery"}
+</pre>
+</div>
+
+<div id="related">
+  <h3>Possibly Related Posts</h3>
+  <ul class="posts">
+    
+      <li><span>30 Mar 2014</span> &raquo; <a href="/all/writing/2014/03/30/Whats-in-a-Browser.html">What's in a Browser</a></li>
+    
+      <li><span>01 Jan 2014</span> &raquo; <a href="/all/projects/2014/01/01/Snow-Day.html">Snow day an experiment in bash web scraping.</a></li>
+    
+      <li><span>11 Jun 2013</span> &raquo; <a href="/all/writing/2013/06/11/Malin-Grey.html">Welcome to Malin Grey</a></li>
+    
+  </ul>
+</div>
+
+</div>
+
+<div id="isotype">
+  <div id="icon_scroll" class="icon_static">
+	<!--Twitter Birdy-->
+	<image src="/images/twitter_bird.png" alt="post highlighted string to twitter" id="tweet" style="display:none;" onClick="tweet_me()">
+  </div>
+</div>
+
+
+<div id="footer">
+<a href="http://twitter.com/seamustuohy">twitter</a> ||
+<a href="/about.html">about</a> ||
+<a href="https://github.com/elationfoundation">github</a>
+</div>
+</div>
+
+</body>
+
+</html>
+

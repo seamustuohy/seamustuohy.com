@@ -1,0 +1,625 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+	<channel>
+		<title>Seamus Tuohy - A RSS feed</title>
+		<description></description>		
+		<link>http://www.seamustuohy.com</link>
+		<atom:link href="http://seamustuohy.com/rss.xml" rel="self" type="application/rss+xml" />
+		
+			<item>
+				<title>Nmap cardiology using nmap scripting to test the heartbleed bug</title>
+				<description>&lt;p&gt;A few days ago the &lt;a href=&quot;http://heartbleed.com/&quot;&gt;Heartbleed bug&lt;/a&gt; came out which allowed attackers to read the memory of systems using a vulnerable version of OpenSSL. &lt;em&gt;Reading the memmory&lt;/em&gt; will allow attackers to steal even the encryption keys which make &lt;em&gt;all&lt;em/&gt; secure traffic &lt;em&gt;ever&lt;/em&gt; monitored to and from one of these systems decryptable. But, that happened a whole two days ago (as of when I put fingers to keyboard on this piece). If you are reading this blog, you probobly know that. So, what I decided to do this morning is to build a script to identify, and notify, vulnerable systems.
+
+&lt;p&gt;I have wanted to use the &lt;a href=&quot;http://nmap.org/&quot;&gt;Nmap&lt;a/&gt; &lt;a href=&quot;http://nmap.org/book/nse.html&quot;&gt; scripting engine&lt;/a&gt; for quite some time now. Nmap is a (========EXPLAIN WHAT IS NMAP HERE======). I enjoy using Nmap, but I find the command line flags cumborsom. Nmap implemented a &lt;a href=&quot;http://www.lua.org/&quot;&gt;Lua&lt;/a&gt; based scripting engine in 2007. (=========WHY ME, WHY LUA, WHY FUN=======).&lt;/p&gt;
+
+&lt;p&gt;To start I need to gather my tools. Nmap has a robust &lt;a href=&quot;http://nmap.org/nsedoc/&quot;&gt;script library&lt;/a&gt; already, and I don't want to write what I don't have to. Heartbleed was orginally released on April 7th 2014.  It is 7:50am on April 9th and there is already a Heartbleed vulnerability scripted up and uploaded to the script library... I am as dissapointed as you are. But, since this was supposed to simply be a nmap scripting lesson, and open source is rooted in reuse, we are not going to re-implement this from scratch. Instead, we are going to use this script to make a vulnerability notifier.&lt;/p&gt;
+
+&lt;p&gt;The first thing we need to do is set up our script. This simply means that I write a description, author information, licsence, and assign this script to a set of categories. 
+
+&lt;pre&gt;
+description = [[
+Identifies servers who are vulnerable to heartbleed and then notifies the current owner of the ip address with an e-mail. 
+]]
+
+author = &quot;Seamus Tuohy &lt;s2e@seamustuohy.com&gt;&quot;
+license = &quot;Same as Nmap--See http://nmap.org/book/man-legal.html&quot;
+categories = { &quot;vuln&quot;, &quot;safe&quot;, &quot;discovery&quot;}
+&lt;/pre&gt;</description>
+				<pubDate>Wed, 09 Apr 2014 00:00:00 -0400</pubDate>
+				<link>http://www.seamustuohy.com/all/projects/2014/04/09/nmap-cardiology.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/projects/2014/04/09/nmap-cardiology.html</guid>
+			</item>
+		
+			<item>
+				<title>What's in a Browser</title>
+				<description>&lt;p&gt;I was recently asked to provide some instructions on how one could easily monitor ones own web traffic. In the past I have written about how to use my one true love, wireshark, for testing encryption on the  Commotion project. But, a packet to packet stream of data not easy to grok for those new to the field. So, this short piece is on how to use the chrome browser, and a single extension, to get an idea of what traffic you are sending to the internet. If you follow along you will learn the basics of how to see what data the websites you visit are requesting, and wherethey are sending it too. We will focus on how to best search for the data you are looking at, so that you are better prepared to start your own excursions into the internals of the internet.&lt;/p&gt;
+
+&lt;p&gt;Before you run off and download chrome and the extension I am about to show you. I want you to take part in an experiment to see just how unique you are on the internet. Go to https://panopticlick.eff.org/ to see how unique your current browser setup is. When you click &lt;em&gt;test me&lt;/em&gt; on this page you will be taken to a overview page. There is a lot of information on this page, but the most important piece is the first line. The more generic the browser, the more you blend in to the crowd. This page uses data your computer sends out to EVERY website it visits to tell you the uniqueness of your specific computers configuration. This includes the plug-in's you have installed, the browser, computer, and language of your computer, among other things. I will not go in to depth about browser fingerprinting here. The article attached to the panopticlick page https://panopticlick.eff.org/browser-uniqueness.pdf is a great overview that I reccomend you read if you are interested. Feel free to come back to this panoticlick site as you continue along this post. When we start looking at the data that your computer sends to websites you should try to find where this webiste is getting all its data from.&lt;/p&gt;
+
+&lt;p&gt;Now, if you are not already using it, download the chrome browser and we can begin. You are going to start by installing Ghostery. https://chrome.google.com/webstore/detail/ghostery/mlomiejdfkolichcflejclcbmpeaniij?hl=en This application is a &lt;em&gt;Tracker Blocker&lt;/em&gt; that alerts you to well known data colection sites and blocks your brower from sending them any data. There are a few tools for doing this, and I don't reccomend Ghostery over any others, but the way it displays alerts is going to be useful for our purposes today.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/ghostery_install_enable_alerts.png&quot; alt=&quot;Screenshot of enabling alerts during installation.&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;Make sure to enable &lt;em&gt;Alert Bubbles&lt;/em&gt; and all of the possible trackers when you set up ghostery. This will allow you to see the full extent of &lt;em&gt;partner sites&lt;/em&gt; that are tracking you.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/ghostery_install_tracker_selection.png&quot; alt=&quot;Screenshot of tracker selection during installation.&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;You will notice, that if you load up seamustuohy.com with Ghostery enabled it does not show any trackers. That is becuase I don't care who comes to my site or how much traffic it gets. Sites that rely on add revinue, or heavily use analytics to track what content users like rely on various trackers to do the work of collecting that data. We are going to  buzzfeed (which I absolutely do not reccomend at all for any purpose) to see trackers in action.&lt;/p&gt;
+
+&lt;p&gt;When I went to BuzzFeed Ghostery showed me a pop up with 10 different trackers listed. Clicking on the blue ghost in the upper right hand corner will allow you to explore each of the trackers to get an idea of the purpose of the tracker, and what data collected. Clicking on the crossed out link below a trackers name will show you where the data it sent leads to.
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/buzzfeed_tracker_alert.png&quot; alt=&quot;Screenshot of trackers found on buzzfeed.&quot;&gt;&lt;/p&gt;
+
+I chose &lt;em&gt;Audience Amplify&lt;/em&gt; at random for the rest of this post. The data it sent went on a journey from the &lt;em&gt;ads&lt;/em&gt; section of audienceamplify.com to &lt;em&gt;afnxs.com&lt;/em&gt; which is the advertising data company AppNexus, and ends at Facebook. Even though BuzzFeed may not directly send your data to facebook, though a few partnering agreements and some redirected packets facebook is being sent some data. And you didn't even &lt;em&gt;like&lt;/em&gt; anything yet. We don't know what data Facebook is receiving because we have not looked into this packet. And, because a full packet analysis would be dreadfully long we will not cover the full purpose of this packet in this post.&lt;p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/audienceamplify_traffic_ghostery_alert.png&quot; alt=&quot;Screenshot of ghostery section for audience amplify.&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/audience_amplify_path.png&quot; alt=&quot;Screenshot of traffic path of audience amplify packet.&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;Lets inspect that packet now to see what actually got sent. First, turn off the filtering of Audience Amplify on Buzzfeed by using the menu in the blue ghost. There will be a toggle next to Audience Amplify that you want to turn green. Second, click on the menu (three stacked horizontal bars) next to the ghost and go to &lt;em&gt;Tools --&gt; JavaScript Console&lt;/em&gt; This will open up a menu on the bottom of the screen. This menu allows you to see what Chrome is doing behind the scenes.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/js_console.png&quot; alt=&quot;Screenshot of chrome js console.&quot;&gt;&lt;/p&gt;
+
+
+&lt;p&gt;We are interested in the data sent over the network. So, we are going to click on the &lt;em&gt;Network&lt;/em&gt; tab on the top of this menu. On the upper left hand side of this menu is another set of icons. Click on the &lt;em&gt;Filter&lt;/em&gt; icon to give us the option to filter our traffic.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/console_filter.png&quot; alt=&quot;Screenshot of chrome js console filter button.&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;Now that we have our inspection tools set up, lets refresh this page and find the tracker from Audience Amplify. Once you have refreshed you will see the &lt;em&gt;Network&lt;/em&gt; section fill up with items. These are all the photos, html, cookies, scripts, etc. that this page uses. Type in &lt;em&gt;audience&lt;/em&gt; into the search bar at the top of the javascript console. This will filter out all of the data except for packets that have the word &lt;em&gt;audience&lt;/em&gt; in them. If you click on one of the pieces of data the view that opens to the right is the actual contents of the data that was sent.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/blog/browser_traffic/audience_amplify_packet.png&quot; alt=&quot;Screenshot of audience amplify packet in js console.&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;We are lookign at one piece of data among dozens that were sent to and from this site. Many of the 10 'malicious' data streams that Ghostery blocked have multiple pieces of data that they blocked. Each, of these has a bevy of information within it. Because there is so much variation in the traffic you send on the internet. We are going to explore how to search for a specific value within a packet so that you can explore more on your own. For this example I am going to pick a well documented one that has a good ammount of history, and is rarely used anymore. We are going to discover what this value is and how it works. Down under &lt;em&gt;Response Headers&lt;/em&gt; there is a value called &lt;em&gt;P3P&lt;/em&gt;. The next 900ish words of this article are only exploring this one line. This is why simple explorations of internet traffic are so hard to come by. Looking at &lt;em&gt;P3P&lt;/em&gt; there are two sets of values: &lt;em&gt;policyref&lt;/em&gt; and &lt;em&gt;CP.&lt;/em&gt; I can identify the names by the fact that they use an equal sign to say that the value is equal to the text that follows. I can tell there are two seperate values because they use commas to seperate themselves. This is how the chrome network viewer seperates these values, so it should be common across other values you look at.&lt;/p&gt;
+
+&lt;p&gt;Identifying each value means is the meat of understanding your network traffic. Search engines have made this process far easier. While I would usually not suggest the use of Google for searching, they currently have the best results for more obscure technical content. Because every piece of data counts when you are tacking it every piece of traffic it is common to use acronyms like P3P to label values. Since an acronym can be used in dozens of fields it is always a good idea to put it in context of networking and the &lt;em&gt;header section&lt;/em&gt;. P3P is found in the &lt;em&gt;Response Header&lt;/em&gt; section. Searching for &lt;a href=&quot;https://www.google.com/search?q=Response+Header+P3P&quot;&gt;&lt;em&gt;Response Header P3P&lt;/em&gt;&lt;/a&gt; hits the jackpot. I not only get a wikipedia article about P3P, the second link is a concise background from some company selling P3P headers as a service. While I am work in the non-profit tech world there are some beautiful concise explanations of complex technical topics to be had in sales pitches. Using these two pages I can tell that P3P is data is used to show a websites &lt;em&gt;data management practices.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;To identify the specific values we saw I will go back to our search and tack the name of one of them on to our query &lt;a href=&quot;https://www.google.com/search?q=Response+Header+P3P+policyref&quot;&gt;&quot;Response Header P3P policyref.&quot;&lt;/a&gt; Wow! The first link is a &lt;a href=&quot;http://www.w3.org/&quot;&gt;W3C&lt;/a&gt; &lt;em&gt;internet-draft&lt;/em&gt; and the second is their &lt;em&gt;The Platform for Privacy Preferences 1.0 (P3P1.0) Specification.&lt;/em&gt; A brief aside about these types of documents. In your time looking at what your browsers network traffic you are going to come across documents put out by The World Wide Web Consortium (W3C). This is the group of experts who develop the standards for the web. It is these open standards that allow the internet to work even while it is distributed across millions of devices. These standards start as &lt;a href=&quot;http://www.w3.org/TR/tr-technology-drafts&quot;&gt;&quot;draft&quot;&lt;/a&gt; like our first link, and then become &lt;a href=&quot;http://www.w3.org/TR/tr-technology-stds&quot;&gt;&quot;standard&quot;&lt;/a&gt; for the web in a process that makes the UN look efficient.&lt;/p&gt;
+
+&lt;p&gt;I am going to use the &lt;em&gt;P3P Specification&lt;/em&gt; to find out what the values we found are because that is the final document. I am going to start with the policyref field. One of the great things about these specification documents is that they are usually all on one page. This will let us use (&lt;a href=&quot;https://support.google.com/chromebook/answer/183101#pageshortcuts&quot;&gt;Ctrl-F&lt;/a&gt;) to open the word-search tool in Chrome and search for &lt;em&gt;policyref&lt;/em&gt;. This search takes me to Section &lt;em&gt;2.2.2 HTTP Headers.&lt;/em&gt; The search also highlights all instances of the work policyref. Looking through the sentances that have a highlighted policyref I see the basic definition. A policyref is &lt;em&gt;a URI which specifies the location of a policy reference file which may reference the P3P policy covering the document that pointed to the reference file, and possibly others as well.&lt;/em&gt; Beyond the legalise it sounds like it is a file with the reference to a sites policy document. When I go to the &lt;a href=&quot;http://cdn.adnxs.com/w3c/policy/p3p.xml&quot;&gt;link&lt;/a&gt; that was in the policyref field in a new window I get taken to an &lt;a href=&quot;https://en.wikipedia.org/wiki/XML&quot;&gt;XML tree&lt;/a&gt; that chrome styles into a foldable list for me. Looking over the content in the document it looks like contact information  for the company in case you want to opt-out or have some other dispute with them about this service.&lt;/p&gt;
+
+&lt;p&gt;Now that we knwo what policyref is for I am going to search for the other, more cryptic value we found. I am going to continue to use the W3C P3P specification we found in our search. Searching for CP I first get sent to one instance of the work tCP/ip and then after continuing find myself in section &lt;em&gt;4.1 Referencing compact policies.&lt;/em&gt; Looking downward in the section I saw section 4.2 had a key that contained all of the symbols listed in the CP value from our network traffic. The string we found contained the following values (NOI DSP COR ADM PSAo PSDo OURo SAMo UNRo OTRo BUS COM NAV DEM STA PRE). I found the first value of NOI in section &lt;em&gt;4.2.1 Compact access.&lt;/em&gt; According to that section this value means that &lt;em&gt;compact-access&lt;/em&gt; exists &lt;em&gt;for nonident.&lt;/em&gt; I have no idea what that means. So, I type &lt;em&gt;Ctrl-f&lt;/em&gt; and type in &lt;em&gt;nonident.&lt;/em&gt; After clicking through a few different uses of nonident that don't seem to contain any definition I found section &lt;em&gt;3.2.5 The Access element.&lt;/em&gt;  Since we were looking at &lt;em&gt;compact &lt;em&gt;access&lt;/em&gt;&lt;/em&gt; it only makes sense that the full &lt;em&gt;access&lt;/em&gt; section would contain the values I need. Through this I found out that nonident is just shorthand for a website that does not collect identified data. Well, this audienceamplify data is looking better already. I continue searching for the next element in the same way. I find that DSP it is the shorthand for the start of the dispute resolution section. The next item, COR, specifies that I can use their dispute resolution service to remidy wrongful actions and errors. The rest of the values can also be found using the same steps.&lt;/p&gt;
+
+&lt;p&gt;I chose a well documented item to explore in this post. Sadly, not every header or piece of data is written about in an open standard. You will encounter vague shorthanded items with seeming gibberish as their values as you explore more network traffic. Searching for these online will open up a world of other internet spelunkers disecting and explaining these strange glyphs in an attempt to understand their traffic. Monitoring ones own internet traffic is an excersize in decyphering shorthand and distilling intent from it. This act will teach you more about the structure of the internet than you could beleive. There are other methods of looking at your internet traffic. Many of them, like wireshark, require you to install applications that will monitor &lt;em&gt;all&lt;/em&gt; the data your computer is sending to the world. I hope this short dive into how to explore your browser traffic leads you down a rabbit hole you enjoy. I sure do.&lt;/p&gt;</description>
+				<pubDate>Sun, 30 Mar 2014 00:00:00 -0400</pubDate>
+				<link>http://www.seamustuohy.com/all/writing/2014/03/30/Whats-in-a-Browser.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/writing/2014/03/30/Whats-in-a-Browser.html</guid>
+			</item>
+		
+			<item>
+				<title>Snow day an experiment in bash web scraping.</title>
+				<description>&lt;p&gt;My current work follows federal government closures because we are in DC. We recently had a snow day at the office that I missed because the e-mail went out before I left the house. Well, I had enough and decided to automate the e-mails the instant the website changed to make sure that I never missed a snow day again.&lt;/p&gt;
+
+&lt;p&gt;First I went to the site that gives the current status.&lt;/p&gt;
+
+&lt;pre&gt;http://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/&lt;/pre&gt;
+
+&lt;p&gt;First I went and viewed the page-source to see what the underlying code would be. Looking at the source I saw that the important text was within a div with the statusContainer class.&lt;/p&gt;
+
+&lt;pre&gt;
+&amp;lt;div class=&amp;quot;StatusContainer&amp;quot;&amp;gt;
+  &amp;lt;div class=&amp;quot;Status Open&amp;quot;&amp;gt;
+    &amp;lt;h2&amp;gt;Washington, DC, Area&amp;lt;/h2&amp;gt;
+	&amp;lt;p class=&amp;quot;Date&amp;quot;&amp;gt;Applies to: &amp;lt;strong&amp;gt;January 1, 2014&amp;lt;/strong&amp;gt;&amp;lt;/p&amp;gt;
+	&amp;lt;h3&amp;gt;Status: Open&amp;lt;/h3&amp;gt;
+	&amp;lt;p&amp;gt;Federal agencies in the Washington, DC, area are &amp;lt;strong&amp;gt;OPEN&amp;lt;/strong&amp;gt;.  Employees are expected to report to their worksite or begin telework on time.&amp;lt;/p&amp;gt;    
+  &amp;lt;/div&amp;gt;
+  &amp;lt;more code&amp;gt;...&amp;lt;/more code&amp;gt;
+&amp;lt;/div&amp;gt;
+&lt;/pre&gt;
+
+&lt;p&gt;I wanted to do this as a bash function within the cron tab because it sounded fun and I am always looking for opportunities to play with wget. NOTE: I am using the full text command flags in this post. You can use the shorthand flags as well. I like to use the full text command flags so that I can look back on my scripts and actually know what they do. It makes them more verbose, but easier to maintain, update, and read. &lt;/p&gt;
+
+&lt;p&gt;First I needed to grab the website. I chose wget to do this because it is my go to website scraper. Simply using wget with the url of the website will download it into a file in the current directory. But, I don't want to create a file every time I read the website so I will use the output command's - flag to send the page contents to standard output so that I can scrape it appropriately. I also used a quieted output so I only saw the webpage, and not the wget status.&lt;/p&gt;
+
+&lt;pre&gt;
+    wget --quiet --output-document=- http://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/
+&lt;/pre&gt;
+
+&lt;p&gt;Once I had it piping correctly I created a small shell script to set it to a variable I could check against. While I would usually use sed to parse through a multi-line file, this data comes as a stream and can more cleanly be parsed with one or two greps. I only want to get the section above.&lt;/p&gt;
+
+&lt;pre&gt;
+#!/bin/bash
+
+current=$(wget --quiet --output-document=- http://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/)
+
+section=$(echo $current |grep --only-matching --extended-regexp &quot;class\=\&quot;StatusContainer\&quot;.*Status: (Open|Closed)&quot;)
+&lt;/pre&gt;
+
+&lt;p&gt;Next I want to check the date of the site. I am sure federal government's website admin's are on point, but I don't want to send false positives.&lt;/p&gt;
+
+&lt;pre&gt;
+mon=$(date +%B) # get the month
+day=$(date +%d |grep --only-matching &quot;[^0].*&quot;) #they do not use a leading 0. Date does.
+year=$(date +%Y) # get the year
+date=$(echo $section |grep --only-matching &quot;$mon $day, $year&quot;)
+&lt;/pre&gt;
+
+&lt;p&gt;I want to grab the current status off the site. I use cut to separate the word &quot;status:&quot; from the actual status by cutting the string on its spaces and grabbing the section section&lt;/p&gt;
+
+&lt;pre&gt;
+status=$(echo $section |grep --only-matching --extended-regexp &quot;Status\: (Open|Closed)&quot; |cut --delimiter=&quot; &quot; --fields=2)
+&lt;/pre&gt;
+
+&lt;p&gt;Finally, I place a little bit of logic at the end to make sure all my values are right and use sendmail to shoot out a short email. I also added a temporary file to make sure that when this code is run multiple times during a blizzard or other snow-pocolypse I don't send extraneous emails to everyone reminding them that they are trapped in winters cold grasp. For those who are less experienced, the /tmp/ directory is cleared out after every reboot. This means if the machine reboots it will re-send the message. We keep our server on and on a generator, so i am not worried. But, if this is running on your desktop and the blizzard is giving you power on and off throughout the snowstorm it will send an email when it runs after every reboot.&lt;/p&gt;
+
+&lt;pre&gt;
+if [ &quot;$status&quot; == &quot;Closed&quot; ] &amp;&amp; [ &quot;$date&quot; ] &amp;&amp; [ ! -f &quot;/tmp/.snowday&quot; ]; then
+	echo &quot;SNOW DAY!!&quot; &gt;&gt; /tmp/.snowday
+    SUBJECT=&quot;Snow Day Today!&quot;
+    EMAIL=&quot;staff@your_workplace_here.com&quot;
+    echo &quot;It's a snow day&quot; | mail -s &quot;$SUBJECT&quot; &quot;$EMAIL&quot;
+elif  [ &quot;$status&quot; == &quot;Open&quot; ] &amp;&amp; [ -f &quot;/tmp/.snowday&quot; ]; then
+	rm /tmp/.snowday
+fi
+&lt;/pre&gt;
+
+
+&lt;p&gt;Here is the full script put together.&lt;/p&gt;
+
+&lt;pre&gt;
+#!/bin/bash
+current=$(wget -q -O- http://www.opm.gov/policy-data-oversight/snow-dismissal-procedures/current-status/)
+section=$(echo $current |grep -o -E &quot;class\=\&quot;StatusContainer\&quot;.*Status: (Open|Closed)&quot;)
+
+mon=$(date +%B) 
+day=$(date +%d |grep -o &quot;[^0].*&quot;)
+year=$(date +%Y)
+date=$(echo $section |grep -o &quot;$mon $day, $year&quot;)
+status=$(echo $section |grep -o -E &quot;Status\: (Open|Closed)&quot; |cut -d&quot; &quot; -f2)
+
+if [ &quot;$status&quot; == &quot;Closed&quot; ] &amp;&amp; [ &quot;$date&quot; ] &amp;&amp; [ ! -f &quot;/tmp/.snowday&quot; ]; then
+	echo &quot;SNOW DAY!!&quot; &gt;&gt; /tmp/.snowday
+    SUBJECT=&quot;Snow Day Today!&quot;
+    EMAIL=&quot;staff@your_workplace_here.com&quot;
+    echo &quot;It's a snow day&quot; | mail -s &quot;$SUBJECT&quot; &quot;$EMAIL&quot;
+elif  [ &quot;$status&quot; == &quot;Open&quot; ] &amp;&amp; [ -f &quot;/tmp/.snowday&quot; ]; then
+	rm /tmp/.snowday
+    SUBJECT=&quot;Snow Day OVER!&quot;
+    EMAIL=&quot;staff@your_workplace_here.com&quot;
+    echo &quot;The sun has arrived. Back to work you lollygaggers!&quot; | mail -s &quot;$SUBJECT&quot; &quot;$EMAIL&quot;
+fi
+&lt;/pre&gt;
+
+&lt;p&gt;I first copy my script into my local binaries directory and make it executable.&lt;/p&gt;
+
+&lt;pre&gt;
+cp snowday.sh /usr/local/bin/.
+chmod 755 /usr/local/bin/snowday.sh
+&lt;/pre&gt;
+
+&lt;p&gt;And, now that the script is done and ready to run I have to set running. If the fed has a standard time when they put up the site I would set it to that specific time every morning. Since I have no idea when they turn the snow alarm on I will just run it once every two hours. To do this I will have to paste the following line into my crontab.&lt;/p&gt;
+
+&lt;pre&gt;
+echo &quot;0 */2 * * * /usr/local/bin/snowday.sh&quot;
+&lt;/pre&gt;
+
+&lt;p&gt;To do this I run &lt;code&gt; cron -e &lt;/code&gt; which will open up an editor where I can paste the code in. After that I can sit back with my hot cocoa knowing I will never miss a snow-day again.&lt;/p&gt;
+
+&lt;p&gt;This was a fun little project, but I never actually used this script. I just signed up an email account to their listserv and had it forward emails sent to it about federal government closures to the entire office. Sometimes the easiest solution is the best, even if not the most fun. ;) &lt;/p&gt;
+</description>
+				<pubDate>Wed, 01 Jan 2014 00:00:00 -0500</pubDate>
+				<link>http://www.seamustuohy.com/all/projects/2014/01/01/Snow-Day.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/projects/2014/01/01/Snow-Day.html</guid>
+			</item>
+		
+			<item>
+				<title>Welcome to Malin Grey</title>
+				<description>&lt;h3&gt;How the recently leaked NSA surveillance programs will re-embolden a librarians worst enemy.&lt;/h3&gt;
+
+&lt;p&gt;Recently news outlets, digital intellectuals, and the tech-savvy children of every 'conspiracy theorist' in the US have been trying to find an explanation that satiates their audiences meta-data craving. The recent wave of leaks funneled through Glan Greenwald exposed a wide-scale global surveillance and data analysis program that monitors the who, where, when, and how of global communications. This surveillance only stops at the wide scale monitoring of the what. Over time this newly awakened population is going to start to ask how they can regain their privacy. And, much to every codemakers chagrin, the answer is not simply to make our communication unreadable, the last shreds of our fourth amendment still seems to shield our speech, the answer is in making our conversations and ourselves un-indexable.&lt;/p&gt;
+
+&lt;p&gt;A few months ago I began a wikipedia dive fueled by the kind of listless boredom that lead to toothbrush cleaned grout and junk-drawer sorting before the dawn of the Internet. At some point in the haze I found myself exploring the odd world of library catalog systems, and that is where I found &lt;a href=&quot;http://en.wikipedia.org/wiki/Gray_literature#Malin-grey_literature&quot; target='_blank'&gt;malin-grey.&lt;/a&gt; Malin-grey literature is a subset of a librarians most hated realm of literature; grey literature. &lt;a href=&quot;http://GreyNet.org&quot; target='_blank'&gt;Grey literature&lt;/a&gt; is high quality writing not controlled by commercial publishing, and therefore difficult to catalog. These publications range from leaflets, to speeches, to yearbooks, to government reports, and beyond. These are the kinds of documents that cause lifelong feuds in the basement of the Library of Congress. But malin-grey is a special sort of evil. Works of its type are written to actively avoid dissemination, cataloging, and archiving. Through deception, disinformation, rapid decomposition, obscure formatting, and a lack of bibliographical indicators this writing is constructed out of the nightmares of librarians. In fact, malin-grey's wikipedia snippet defies the power of the Internet, &lt;a href=&quot;http://infocult.typepad.com/infocult/2010/10/a-wikipedia-prank-or-sneaky-story.html&quot; target='_blank'&gt;being as self-referential and obscure as the topic itself.&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;The open standards for distributing and accessing devices and data that make the Internet work, also make everything on it indexable. Grey literature has found a home in this digital age with &lt;a href=&quot;http://archive.org/&quot; target='_blank'&gt;The Internet Archive,&lt;/a&gt; &lt;a href=&quot;http://scholar.google.com/&quot; target='_blank'&gt;Google&lt;/a&gt;, &lt;a href=&quot;http://sunlightfoundation.com/&quot; target='_blank'&gt;The Sunlight Foundation&lt;/a&gt; and many others working to archive and index this difficult but important information. At the same time these tools and techniques have been used by Google, Facebook, the NSA, and a multitude of other advertisers, and meta-data monetizers to index us. The specks of meta-data culled from our digital interactions and pieced together form a &lt;a href=&quot;http://en.wikipedia.org/wiki/Georges_Seurat&quot; target='_blank'&gt;Seurat&lt;/a&gt; that can encompass enough of a human to to manipulate with advertising or incriminate in possible . In a world that increasingly resembles one huge library, the only intelligent choice is to shuffle the card catalog.&lt;/p&gt;
+
+&lt;p&gt;The first step in shuffling the card catalog is to learn just how those small flecks of meta-data can be pieced together to identify you. The EFF wrote a &lt;a href=&quot;https://www.eff.org/deeplinks/2010/01/primer-information-theory-and-privacy&quot; target='_blank'&gt;primer&lt;/a&gt; on how bits of information are used to identify an individual you should start with. Secondly, you need to learn how to &lt;a href=&quot;http://grugq.github.io/blog/2013/06/13/ignorance-is-strength/&quot; target='_blank'&gt;isolate the small flecks&lt;/a&gt; you are bound to leak. The more you can isolate the various aspects of yourself, the more that you form an incomplete and un-indexable picture. Devices that phone home constantly, like a cell phone, and accounts that you carry across devices, like cloud services, tie your identities together. Proper sanitation of the various devices and services of your life can also lead to a forced work life balance, which is a perk I am quickly starting to enjoy. The last piece of this first step on your journey is to start using services that are built with your &lt;a href=&quot;http://prism-break.org/&quot; target='_blank'&gt;privacy in mind&lt;/a&gt; through &lt;a href=&quot;https://www.propublica.org/article/worried-about-the-mass-surveillance-how-to-practice-safer-communication&quot; target='_blank'&gt;connections that are secure&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The journey to become un-indexable is on a long and constantly changing path. As new methods for tracking and sharing meta-data are invented, utilized, and legalized the methods for obfuscating ourselves must also adapt. But, at each step we must demand the right to be unseen, to control who shares our moments, to keep secrets, to blend in with the crowd, and to be forgotten. Welcome to the world of malin-grey.&lt;/p&gt;
+</description>
+				<pubDate>Tue, 11 Jun 2013 00:00:00 -0400</pubDate>
+				<link>http://www.seamustuohy.com/all/writing/2013/06/11/Malin-Grey.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/writing/2013/06/11/Malin-Grey.html</guid>
+			</item>
+		
+			<item>
+				<title>ListServ's and Python Regular Expressions</title>
+				<description>&lt;p&gt;List-servs are important for digital communities. Their archives form a repositoy of their communicative history. Luckily, the medium of e-mail adds some structure to the otherwise messy medium of human communication. I will be exploring how to take the text based list-serv archive and derive some understanding about the community behind it.&lt;/p&gt;
+
+
+&lt;p&gt;This post will explore how I took plain text downloads of a list serv archive and used regular expressions to create a data structure that is easier to parse through. I will be using the language python because I find it a clear language to teach in. For newer programmers who may be reading this post I should point out that this can be done in many languages. I, for instance, did the first pass of this work in bash shell scripting, which I would not reccomend.&lt;/p&gt;
+
+&lt;p&gt;Before we start we need to get some test data from a list-serv archive. A list-serv archive page contains a set of text links for download. For this I used the command line tool wget. (Don't type the $)&lt;/p&gt;
+
+&lt;pre&gt;
+$ wget -r -A.txt URL_GOES_HERE
+&lt;/pre&gt;
+
+&lt;p&gt;This recursively grabs all files with the file extension listed behind the A from the url specified. Since I was pulling the text files from a mailman archive I just put in the mailman address and let it grab me all the text. The listserv I used lets you download the plain text directly, but some only offer gzip or other compressed formats for their files. This will require you to do some post-processing on the files to uncompress them into plain text before playing with them.&lt;/p&gt;
+
+&lt;p&gt;I ran these tests on one month of two different list-serv archives in order to cross check acrss list-serv formatting, while keeping my testing data low. &lt;/p&gt;
+
+&lt;p&gt;The first thing we need to explore is the header of an e-mail. I opened up one of the text files in an editor to explore what the headers looked like. They follow the format below.&lt;/p&gt;
+
+&lt;pre&gt;
+From person at site.blank.edu  Tue Dec  1 01:10:28 2009
+From: person at site.blank.edu (bob smith)
+Date: Tue, 12 Dec 2002 11:20:28 -0540
+Subject: [ListServ] I am a subject line 
+In-Reply-To: &lt;22234182.1259452773827.someMail.rooted@g56&gt;
+References: &lt;Pine.LNX.4.64.09555432314200.8174@someServer.Stanford.EDU&gt;
+	&lt;22234182.1259452773827.someMail.rooted@g56&gt;
+Message-ID: &lt;4B14DFF4.8080322G01@site.blank.edu&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;Once I saw this I opened python through the command line and started to play around. I kept notes as I worked to walk you through the thinking process I took in exploring the data. This means that the perspective will change, and you will see me fumble, fail, and yell at my code throughout the rest of this post. If you want to, you can download an archive text file and follow along. As I make mistakes, you will see them pop out right before I start ALL_CAPS-ing all over the place. I hope it will be as fun for you as it was for me.&lt;/p&gt;
+
+&lt;p&gt;First, Let's open the file and create a raw text version we can manipulate. When I use &quot;&gt;&gt;&gt;&quot; at the beggging of a line I am showing you code I ran in python. Sometimes I will use a single or double &gt; when I am showing replies in an e-mail, but I will always let you know.&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; f = open(&quot;/home/name/libtech/mailman.stanford.edu/pipermail/liberationtech/2009-December.txt&quot;)
+&gt;&gt;&gt; raw = f.read()
+&lt;/pre&gt;
+
+&lt;p&gt;Now we import our regular expressions (magic) to begin to parse the text. We will be using regular expressions heavily throughout this, so it is important for you to understand generally what they are. So, go to wikipedia and read the first bit there if you don't understand. &quot;re&quot; is the name of the python regular expression package, so we import that first.&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; import re
+&lt;/pre&gt;
+
+&lt;p&gt;Lets find all the chunks of text that match the first line of a message like this&lt;/p&gt;
+
+&quot;From bob at the.place.edu  Tue Nov  3 02:10:28 2009&quot;
+
+&lt;p&gt;We can do this by capturing any text that starts with 'From', has some ammount of other text, and is ended by four didgits.&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; messages = re.findall('Find.*\d\d\d\d', raw)
+&gt;&gt;&gt; for i in(messages): print(i)
+&lt;/pre&gt;
+
+&lt;p&gt;Let's break that down into its component parts.&lt;/p&gt;
+
+&lt;p&gt;&quot;messages = &quot; - This is what we want to store our regular expression as
+&quot;re.findall(...)&quot; - This is the python &quot;re&quot; packages way of finding all of the regular expressions that match a chunk of raw text
+&quot;Find&quot; - this looks for the text &quot;Find&quot;
+&quot;.*&quot; - This looks for any charicter (.) as many times in a row as it happens (*)
+&quot;\d\d\d\d&quot; - This looks for number charicters (\d) in a row
+&quot;, raw&quot; - The comma seperates the regular expression before it from the raw text we created before so that re.findall knows what to run the regular expression against. &lt;/p&gt;
+
+&lt;p&gt;That is the last time I will go into that much detail about a command. A few helpful things for those unfamiliar with python or programming who may have difficulty following along. Any command that follows re, like re.COMMAND, is a subcommand of the re module. This is how python knows where to look for the command. Anything before an equals sign in being created, anything after is creating it.&lt;/p&gt;
+
+&lt;p&gt;This first attempt was a very sloppy regular expression. Lets see if we can firm it up a bit? To do this I have added the match this expression &quot;only at the beggining&quot; (^) and the &quot;end&quot;($) of line regular expression charicters. To use these charicters I have to use the MULTILINE flag in my re.findall command. MULTILINE runs regular expressions on only one line at a time so that we can parse the begginging of each line. (New coders, notice how I have used an equal sign later in my code to assign re.MULTILINE to the flags variable.)&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt;names = re.findall('^From.* \d\d\d\d$', raw, flags=re.MULTILINE)
+&lt;/pre&gt;
+
+&lt;p&gt;We now have the first line of every message. Lets split this into its component parts. To do this we will have to see what is &quot;regular&quot; about our expressions and take advantage of it.&lt;/p&gt;
+
+From person at site.blank.edu  Tue Dec  1 01:10:28 2009
+
+&lt;p&gt;The long form regular format of these e-mails looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&quot;From&quot;[space][user name][space]&quot;at&quot;[space][domain name][space][day][space][month][number][space][number][colon][number][colon][number][space][number]&lt;/pre&gt;
+
+&lt;p&gt;The e-mail address looks like&lt;/p&gt;
+&lt;pre&gt;[user name][space]&quot;at&quot;[space][domain name].&lt;/pre&gt;
+&lt;p&gt;The date looks like&lt;/p&gt;
+&lt;pre&gt;[day][space][month][number][space][number][colon][number][colon][number][space][number].&lt;/pre&gt;
+
+&lt;p&gt;For my purposes I care about who sent what, and when they sent it. Because I just need to see the messsages in relation to each other, and don't care about the human readable version of the date (at this point) I am going to cut that out. To specify the components of the regular expression I want returned to me I surround those expressions in parenthesis (). This allows for me to use regular expressions to match patterns across a larger set of data and only get back the things I care about. It also lets me get back the multiple pieces seperately. &lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; names = re.findall('^From\s(.*\sat\s.*)\s*([A-Z][a-z]{2}\s[A-Z][a-z]{2}\s\d.*\d{4}$)', raw, flags=re.MULTILINE)
+&lt;/pre&gt;
+
+&lt;p&gt;Ok, I lied. Here is a quick overview of the new commands. Though for a real explanation of hwo they work you should check out a regular expression tutorial.&lt;/p&gt;
+
+&lt;p&gt;[] - This allows you to set a range for what the charicter will be. I use [A-Z] to say all capital letters and [a-z] to say all lower case.
+{} - this lets you specify a specific number of time the last charicter will occur. a{2} means &quot;aa&quot;. [1-2]{2} means either &quot;11&quot;, &quot;12&quot;, &quot;21&quot;, or &quot;22&quot;
+\s - this is the space charicter &quot; &quot;&lt;/p&gt;
+
+&lt;p&gt;But now we are getting to crazy long regular expressions. While, This regular expression is technically correct, I like to split mine up into easy to use chunks in order to make my code more readable. &lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; who = '(.*\sat\s.*)'
+&gt;&gt;&gt; headerFront = '^From\s' + who + '\s*'
+&gt;&gt;&gt; day = '[A-Z][a-z]{2}'
+&gt;&gt;&gt; month = day
+&gt;&gt;&gt; date = '(' + day + '\s' + month + '\s\d.*\d{4}$)'
+&gt;&gt;&gt; topHeader = headerFront + date
+&gt;&gt;&gt; nameNdate = re.findall(topHeader, raw, flags=re.MULTILINE)
+&lt;/pre&gt;
+
+&lt;p&gt;Ahhhh, thats better. You will notice that I kept the text captures in the named regular expressions so that I only took the data I wanted. This way I can reuse the who value later when I am parsing through the file.&lt;/p&gt;
+
+&lt;p&gt;Since I have the first line parsed the way I want it, now it is time to start grabbing text in relation to that first line. When we were only searching for one line it was nice to have the ability to use ^ and $ to identify the begginging and end of the line. Because we will be working across lines I am going to remove that in order to have our any-charicter expression &quot;.&quot; match the newline charicter &quot;\n&quot; as well. To do this I will use the DOTALL flag with re.DOTALL.&lt;/p&gt;
+
+&lt;p&gt;First I will replace my ^ and $ chars with \n on the regex I have. &lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; headerFront = '\nFrom\s' + who + '\s*'
+&gt;&gt;&gt; date = '(' + day + '\s' + month + '\s\d.*\d{4})\n'
+&lt;/pre&gt;
+
+&lt;p&gt;Now I will change my flags to include dots matching all (hint: You can also use re.S to do the same thing. re.DOTALL is just easier to read and understand a weekend or two later when I have to re-read all my code to know why that thing that should work keeps breaking.)&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; nameNdate = re.findall(topHeader, raw, flags=re.DOTALL)
+&lt;/pre&gt;
+
+&lt;p&gt;EVERYTHING IS RUINED! It captured everything... Oh yea, with periods capturing everything there are a bunch of new interesting results. Lets refine our regular expressions to really focus down what we want.&lt;/p&gt;
+
+&lt;p&gt;First we will replace periods that we don't want matching new lines with &quot;\S&quot; (this is a capitalized s) which matches all non white-space characters. I am also going to remove the built-in captures &quot;(captured text)&quot; so that I can define my captures when I call the function. This will allow me to specify what I want to capture in the future.&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; who = '\S*\sat\s\S*'
+&gt;&gt;&gt; date = day + '\s' + month + '\s{2}\d*\s\S*?\d{4}$'
+&lt;/pre&gt;
+
+&lt;p&gt;With that I can construct a regular expression parser that will let me create a collection that presents me with who an e-mail to a list is from, what date it was sent, and then the contents (including the rest of the header info I have not collected yet)&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; who = '\S*\sat\s\S*'
+&gt;&gt;&gt; headerFront = '^From\s' + who + '\s*'
+&gt;&gt;&gt; capturedFront = &gt;&gt;&gt; headerFront = '^From\s(' + who + ')\s*'
+&gt;&gt;&gt; day = '[A-Z][a-z]{2}'
+&gt;&gt;&gt; month = day
+&gt;&gt;&gt; date = day + '\s' + month + '\s{2}\d*\s\S*?\d{4}$'
+&gt;&gt;&gt; capHeader = capturedFront + '(' date ')'
+&gt;&gt;&gt; dropHeader = headerFront + date
+
+&gt;&gt;&gt;emailList = re.findall(capHeader + '(.*?)' + dropHeader, raw, flags=re.DOTALL)
+&lt;/pre&gt;
+
+&lt;p&gt;or testing purposes I have taken all of the single lines of text and put them in a set of functions to make it easier to quickly modify and check changes in the code. This is that moment I have been dreading. I have switched from playing around on the command line to writing down code that I will have to maintain, comment, document, test, etc. This next paragraph is for new coders, so anyone who is still reading this, who has a strong grasp of python and coding can skip ahead to where I all caps you to start reading again.&lt;/p&gt;
+
+&lt;p&gt;By putting everything in chunk of code I can call all of my setup functions to begin with. So, I start by importing my dependencies &quot;re&quot; and creating a class to hold all the command within. A class is a way of seperating a cope of a set of functions and values into a cohesive unit that will not interfeir with other nearby units that use the same functions and create similarly names values. I decided to wrap all my functions in a class so that I will be able to manipulate multiple listServ files on the command line independantly and simultaniously.&lt;/p&gt;
+
+&lt;p&gt;Python follows a structure where you define a function &quot;def FUNCTION_NAME():&quot; and then indent what belongs to that function within it. Within the parens, you can also put down commands that the function takes, seperated by commas. When a function lives in a class it always takes &quot;self&quot; first in order to make sure that it only operates on the independant instance that it lives within. &lt;/p&gt;
+
+&lt;pre&gt;
+def functionName(self, input)
+&lt;/pre&gt;
+
+&lt;p&gt;The first thing you will see in a python function should be a comment about what the code does. This will be surrounded by three quotes on each side and will give you an overview of the function.&lt;/p&gt;
+
+&lt;pre&gt;
+def functionName(self, input)
+    &quot;&quot;&quot;I am an example function. I take in an input and do nothing else at this point&quot;&quot;&quot;
+&lt;/pre&gt;
+
+&lt;p&gt;Lastly, before we dig in, you will notice that there is a __init__ function. That is a class specific function that creates values upon creating a new function. I use it to define some default variables.&lt;/p&gt;
+
+
+&lt;p&gt;CODERS START READING AGAIN HERE ------&gt;&lt;/p&gt;
+
+&lt;pre&gt;
+import re
+class converter:
+    def __init__(self):
+        self.raw = ''
+
+    def getArchive(self, textFile):
+        &quot;&quot;&quot;This function takes the location of the list-serv text file and opens it up for parsing. Much later I may add the ability to just choose the html address of a list-serv archive. That will be straight up neato!
+        &quot;&quot;&quot;
+        text = open(textFile)
+        rawText = text.read()
+        self.raw = rawText
+    
+
+    def printMessage(self):
+    	&quot;&quot;&quot; This function parses an archive and prints out the results of a generic regular expression. For testing purposes only. Will be converted into a generic dictionary generator that parses the text-file.
+&quot;&quot;&quot; 
+	if self.raw == ''
+	   print(&quot;Please get a list serv archive and import it file first.&quot;)
+        who = '\S*\sat\s\S*'
+        headerFront = '\nFrom\s' + who + '\s*'
+        capturedFront = '\nFrom\s(' + who + ')\s*'
+        day = '[A-Z][a-z]{2}'
+        month = day
+        date = day + '\s' + month + '\s*?\d*?\s\S*?\s\d{4}\n'
+        capHeader = capturedFront + '(' + date + ')'
+        dropHeader = headerFront + date
+#TODO - create captures for all header sections
+#TODO - rewrite the following line to become a dictionary that parses the monthly log and create indiviudal dictionaries of all pertinant header info for each e-mail and includes the content.
+        messageDict = re.findall(capHeader, self.raw, flags=re.DOTALL)
+        print messageDict
+&lt;/pre&gt;
+
+&lt;p&gt;Now that I have my quick regular expression parser I can just change the messageDict to examine my progress. I created a small one liner to reload my function, create a class object, run the function that grabs the text, and run a test print of my regular expression. I saved this funtion as &quot;main.py&quot; in the same directory as &quot;testText&quot;, which is a downloaded listServ archive. From within the directory of those files I re-ran python and then the following command. &lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; reload(main); a=main.converter(); a.getArchive('testText'); a.printMessage()
+&lt;/pre&gt;
+
+&lt;p&gt;The semicolons allow me to run multiple commands on the same line. This is nice because I can use the arrow up key to move back in my python history to re-load the whole code block and test changes I made in my code.&lt;/p&gt;
+
+&lt;p&gt;Now the next step is to capture the rest of the information and put it in a format that is easy to manipulate. To do this we are going to create a dictionary from the parsed data. Since you have a good understanding of Regular Expressions now I will try to only go in-depth when discussing new concepts. Here is our header again.&lt;/p&gt;
+
+&lt;pre&gt;
+From person at site.blank.edu  Tue Dec  1 01:10:28 2009
+From: person at site.blank.edu (bob smith)
+Date: Tue, 12 Dec 2002 11:20:28 -0540
+Subject: [ListServ] I am a subject line 
+In-Reply-To: &lt;22234182.1259452773827.someMail.rooted@g56&gt;
+References: &lt;Pine.LNX.4.64.09555432314200.8174@someServer.Stanford.EDU&gt;
+	&lt;22234182.1259452773827.someMail.rooted@g56&gt;
+Message-ID: &lt;4B14DFF4.8080322G01@site.blank.edu&gt;
+&lt;/pre&gt;
+
+&lt;p&gt;At first glance it is easy enough to parse out the contents of the header using a series of regular expressions for each line such as this.&lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; whom = 'From\:\s(.*?)\n'
+&gt;&gt;&gt; date = 'Date\:\s(.*?)\n'
+&gt;&gt;&gt; subject = 'Subject\:\s(.*?)\n'
+&gt;&gt;&gt; inReply = 'In\-Reply\-To\:\s(.*?)\n'
+&gt;&gt;&gt; refrences = 'Refrences\:\s(.*?)\n'
+&gt;&gt;&gt; messageID = 'Message\-ID\:\s(.*?)\n'
+&gt;&gt;&gt; headerChunks = from + date + subject + inReply + refrences + messageID
+&gt;&gt;&gt; messageDict = re.findall(headerChunks, self.raw, flags=re.DOTALL)
+&lt;/pre&gt;
+
+&lt;p&gt;This won't get all the data. Even worse, it will be all sorts of slow. In fact, I did that set of regular expressions just for your benefit. Not saying that you owe me or anything. I am just saying. So, why won't that work? Think back to your past e-mails, look at our example header, and think about what re.findall does and returns. It is not because I am not grabbing the surrounding text.&lt;/p&gt;
+
+&lt;p&gt;If you figured out that not every message is in reply to somthing else you were right on. The first e-mail in a archive will not have this section. Refrences are the same way. So, we have to come up with a better way to deal with these cases. &lt;/p&gt;
+
+&lt;p&gt;ince we know that a header will always have our archive specific front matter, which is repeated in the header, and a message ID we can safely identify the bounds of the header and grab just it. &lt;/p&gt;
+
+&lt;pre&gt;
+&gt;&gt;&gt; headerFront = '\nFrom\s' + who + '\s*'
+&gt;&gt;&gt; day = '[A-Z][a-z]{2}'
+&gt;&gt;&gt; month = day
+&gt;&gt;&gt; date = day + '\s' + month + '\s*?\d*?\s\S*?\s\d{4}\n'
+&gt;&gt;&gt; dropTop = headerFront + date
+&gt;&gt;&gt; getHeader = '(.*?Message\-ID\:\s.*?\n)'
+&gt;&gt;&gt; messageDict = re.findall(dropTop + getHeader, self.raw, flags=re.DOTALL)
+&lt;/pre&gt;
+
+&lt;p&gt;Now we have a function that only grabs the header of an e-mail from a list-serv. But, we are also dropping the archive specific front matter that we don't like. Lets use this and pythons regular expression &quot;split&quot; function to parse our e-mails out a bit further. &lt;/p&gt;
+
+&lt;pre&gt;
+        splitText = re.split(dropTop, self.raw)
+&lt;/pre&gt;
+
+&lt;p&gt;Using the split function we have created a list of e-mails. This does everyting we need to coorectly parse an e-mail archive. That is, of course, unless somone has the nerve to copy and paste a list-serv message into the text of an e-mail. If that happened, the e-mail would be split up. For instance, if I pasted the text of this article into an e-mail to a listServ it would match a whole bunch of stuff that it is not supposed to and, therefore, cut it into ribbons and ruin any chance of me parsing that listServ correctly. Just warning you, edge cases... they're evil. &lt;/p&gt;
+
+&lt;p&gt;The next step will be to fully parse the headers of a message. Remember when I made you feel all bad about how much extra work I did just to show you what those regular expressions for each line would look like. That was a lie. I am going to use those right now. Let that be a lesson to you. Humans are mischevous little devils and should not be trusted. But, on to the lesson.&lt;/p&gt;
+
+&lt;p&gt;Now that we have split apart our e-mails we can easily pass them to a function that identifies the header sections and splits them apart. In order to make the next section easier, I am also going to use this function to create a dictionary out of split up components. New coders should note that the &quot;#&quot; charicter comments out single lines of comments in python code.&lt;/p&gt;
+
+&lt;pre&gt;
+    def dictify(self, email):
+        #get headers from email
+        getHeader = '(.*?Message\-ID\:\s.*?\n)'
+        msgDict = {}
+        msg = re.findall(getHeader + '(.*)', email, flags=re.DOTALL)
+        #create a dictionary item for body text
+        for i in msg:
+            msgDict['body'] = i[1]
+        # Setting header specific regEx's
+        whom = 'From\:\s(.*?)\n'
+        date = 'Date\:\s(.*?)\n'
+        subject = 'Subject\:\s(.*?)\n'
+        inReply = 'In\-Reply\-To\:\s(.*?)\n'
+        references = 'References\:\s(.*?)\nMessage\-ID\:'
+        messageID = 'Message\-ID\:\s(.*?)\n'
+
+        #create a dictionary item for the header items that are always there.
+        msgDict['From'] = re.findall(whom, email, flags=re.DOTALL)
+        msgDict['Date'] = re.findall(date, email, flags=re.DOTALL)
+        msgDict['Subject'] = re.findall(subject, email, flags=re.DOTALL)
+        msgDict['ID'] = re.findall(messageID, email, flags=re.DOTALL)
+
+        #create checks for items that may not be there.
+        if re.search(references, email, flags=re.DOTALL) != 'none':
+            msgDict['References'] = re.findall(references, email, flags=re.DOTALL)
+        if re.search(inReply, email, flags=re.DOTALL) != 'none':
+            msgDict['Reply'] = re.findall(inReply, email, flags=re.DOTALL)
+	#split up refrences into a list within its dict item for easy parsing later
+        if msgDict['References'] != []:
+            msgDict['References'] = re.split('\s*|\n\t', msgDict['References'][0])
+
+	#remember we are just printing out sections to check for consistancy. I created a simple 'Refrences' to ID printout here to look at how a reply links to the refrences before it.
+        print(&quot;--------------------------&quot;)
+        print(&quot;=======NEW EMAIL=========&quot;)
+        print(&quot;--------------------------&quot;)
+        print(&quot;==========ID==============&quot;)
+        print(msgDict['ID'])
+        print(&quot;==========Reply To==============&quot;)
+        print(msgDict['Reply'])
+        print(&quot;=========Refrences==========&quot;)
+        print(msgDict['References'])
+&lt;/pre&gt;
+
+&lt;p&gt;When we are done we get a dictionary called messages that holds each e-mail as an item that looks like this. New coders, brackets are used to hold items in a dictionary. Within brackets the dictionary has keys and items as such: [key:item, key2:item2] You will notice that in my parsing I have made it so that each item is contained in a smaller list. This is going to cause me all sorts of problems later, but we will ignore that for now.&lt;/p&gt;
+
+&lt;pre&gt;
+['Body': [&quot;ALLL SORTS OF BODY TEXT&quot;],
+ 'From': ['bob at ILovePeanuts.com (Bob Peanut)'],
+ 'Refrences': ['&lt;50E0B2B7.7010304@butterOfTheNut.org&gt;'],
+ 'Date': ['Mon, 01 Dec 2002 18:09:37 -0600'],
+ 'Reply': ['&lt;50E0B2B7.7010304@butterOfTheNut.org&gt;'],
+ 'ID': ['&lt;07080613-2615-4B02-BD9D-8024FD1CD62E@designafternext.com&gt;', '&lt;50E0B2B7.7010304@butterOfTheNut.org&gt;'],
+ 'Subject': [&quot;[LegumeLovers] Macadamia nuts are for the weak!&quot;]
+&lt;/pre&gt;
+
+&lt;p&gt;Well, that is it for parsing the e-mail headers. In the next piece I will go in more depth about how we parse the body text to make it easier to connect in-line responses to their initial message and how we refactor our hacked up code to better expose our list-serv parsers API for others to use it for content analysis.&lt;/p&gt;
+</description>
+				<pubDate>Sun, 17 Mar 2013 00:00:00 -0400</pubDate>
+				<link>http://www.seamustuohy.com/all/projects/2013/03/17/List-Servs-and-Python-Regular-Expressions.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/projects/2013/03/17/List-Servs-and-Python-Regular-Expressions.html</guid>
+			</item>
+		
+			<item>
+				<title>Harm Reduction</title>
+				<description>&lt;p&gt;Our community creates tools for those who beleive they are at risk of violence and oppression. This is a lofty and near impossible envronment to work cleanly within. Tools are quickly outdated, vulnerabilities are horded by the most powerful governments in the world for exploitation, tactics for censorship and surveilance constantly evolve,  and new circumvention tools are being developed and used before older tools have had a chance to be properly reviewed by the security community. In this environment code and educational materials are always going to be found lacking in one way or another. Too often we take a stance where we attribute the blame for possible future outcomes of an exploited vulnerability, or misleading article on the authors.&lt;/p&gt;
+
+&lt;p&gt;The slippery slope of possibilities exagurates the severity of missteps in code and content. Vulnerabilities can be patched, writing ammended, and mispeekings retracted. We cannot ask that others bear the burden of building that their tool be impenitrable &quot;under circumstances that the senders life may depend on it being secure.&quot; What we can do is use an approach to user tools as interventions. Recently a peer mentioned the harm-reduction methodology from drug treatment interventions as one way to shift the focus from the perfect tool to the perfect combinations of tools. After a short period of research and quick find-and-replace of &quot;drug&quot; with &quot;internet&quot; in the key principles of harm reduction as outlined by the CCSA National Policy Working Group (1996) I was convinced.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Pragmatism:&lt;/strong&gt; Some level of [internet] use in society is to be expected. Containment and amelioration of the [internet]-related harms may be a more pragmatic and feasible option, at least in the short term, than efforts to eliminate [internet] use entirely.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Humane Values:&lt;/strong&gt; No moralistic judgment is made about an individual’s decision to use [the internet], regardless of level of use or mode of intake. This does not imply approval of [internet] use. Rather, it acknowledges respect for the dignity and rights of the individual.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Focus on Harms:&lt;/strong&gt; The extent of a person’s [internet] use is of secondary importance to the risk of harms resulting from use. The first priority is to reduce the risk of negative consequences of [internet] use to the individual and others. Harm reduction neither excludes nor presumes the long-term treatment goal of abstinence. In some cases, reduction of level of use may be one of the most effective forms of harm reduction. In others, alteration to the mode of use may be more practical and effective.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Balancing Costs and Benefits:&lt;/strong&gt; Some pragmatic process of assessing the relative importance of [internet]-related problems, their associated harms, and costs/benefits of intervention is carried out in order to focus resources on priority issues. This analysis extends beyond the immediate interests of users to include broader community and societal concerns. This rational approach allows the impacts of harm reduction to be measured and compared with other interventions, or no intervention at all. In practice, such evaluations are complicated by the number of variables to be examined in both the short and long term.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Priority of Immediate Goals:&lt;/strong&gt; The most immediate needs are given priority. Achieving the most pressing and realistic goals is usually viewed as first steps towards risk-free [internet] use or discontinued use.&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+				<pubDate>Wed, 13 Feb 2013 00:00:00 -0500</pubDate>
+				<link>http://www.seamustuohy.com/all/writing/2013/02/13/Harm-Reduction.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/writing/2013/02/13/Harm-Reduction.html</guid>
+			</item>
+		
+			<item>
+				<title>Moving Beyond Name and Shame</title>
+				<description>&lt;p&gt;I have been thinking about Asher Wolf's recent &lt;a href=”http://asherwolf.net/dear-hacker-community-we-need-to-talk/101/” target=&quot;_blank&quot;&gt; blog post&lt;/a&gt;  frequently since it came out. I believe that many in the community have. Being a nearly silent member of the Liberation Technology community I debated whether adding another voice to this discussion would be productive. But, after seeing this opportunity for dialogue be absorbed by the usual patterns of accusations and shaming I decided to become another voice in our community. &lt;/p&gt;
+
+&lt;p&gt;“Naming and shaming” is a strategy that is commonly praised in our community. Culturally it makes sense in a community which holds identity and privacy so sacredly, and in which, social ostracism is so common. It is on the principle of openness that I have seen the most common consensus on the necessity of naming and shaming. And, through this, proponents of closed code in our community are outcast. &quot;Open your heart and code to peer review, and you can be one of us again.&quot; Their names and projects are appended to scarlet lists across the internet, shouted from twitter accounts, and occasionally codified in seemingly &lt;a href=”http://issilentcircleopensourceyet.com/” target=&quot;_blank&quot;&gt;parodical sites.&lt;/a&gt; Because “naming and shaming” is at its core public ostracism it is only as powerful as the desire to re-enter the community, and it is only as useful as the public’s willingness to look to us for trusted projects. &lt;/p&gt;
+
+&lt;p&gt;It is there where naming and shaming fail us. In our community there is secondary practice of naming and shaming the work of others that is found to be wanting. Our &lt;a href=” https://en.wikipedia.org/wiki/Sui_generis#.C3.89mile_Durkheim.27s_sociology” target=&quot;_blank&quot;&gt;Sui Generes&lt;/a&gt; (culture that exists while individuals come and go) has fostered mistrust, and derision within our community, and towards possible new members. With every derisively frank comment we salt the earth of our communicative environments. Each hostile message, post, and tweet settles into our communicative history as a warning to possible members. &quot;Only the strong, aggressive, and pure can survive here.&quot; Every success we have in purifying ourselves alienates new and old members alike. Constant in-fighting tears us apart and isolates us from possible patrons of our tools. Non-technical, and technical users alike, are faced with a cacophony of flaws so opposing they quickly resign themselves to insecurity. Our digital histories are polluted by flame and derision. &lt;/p&gt;
+
+&lt;p&gt;When not in conflict I have seen care, support, kindness, and collaboration from my community members. This community is built upon the freedom, openness, and creativity that permeates the open-source community. Our collaboration is worthy of admiration. It is merely our conflict which does us harm. Our conflict behavior is where we must earn the trust of new members. In our respect for diverse goals, and in our creativity for creating new paths to meet currently &quot;conflicting goals&quot;, we broadcast our inclusiveness and robustness as a community. It is in our robustness, not our exclusiveness, that we will gain the prestige that will allow the uninitiated to trust that we represent and support their needs, not our own. &lt;/p&gt;
+
+</description>
+				<pubDate>Wed, 16 Jan 2013 00:00:00 -0500</pubDate>
+				<link>http://www.seamustuohy.com/all/writing/2013/01/16/Moving-Beyond-Name-And-Shame.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/writing/2013/01/16/Moving-Beyond-Name-And-Shame.html</guid>
+			</item>
+		
+			<item>
+				<title>How Ridiculous Laws Get Made</title>
+				<description>&lt;p&gt;A western couple traveled to the Maldives to get their wedding vows renewed. Upon arriving they paid $1,300 to their hotel for a traditional ceremony that would &amp;#8220;mark a milestone in your amazing journey together&amp;#8221;. They were promised a religious ceremony, a official certification, and a planting of a coconut tree. At the &amp;#8220;wedding&amp;#8221; ceremony instead of reciting the stated traditional prayer and renewal of the vows the officiant instead in his native tongue insulted, and made lascivious comments about the couple. Even the marriage certificate that the officiant read from was merely and employment contract. This was a horrific breach of trust. But, that is not what worries me. What worries me is a series of quotes from government officials.&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;The Maldives&amp;#8217; Deputy Tourism Minister, Ismail Yasir,&lt;a href=&quot;http://www.bbc.co.uk/news/world-south-asia-11644328&quot; target=&quot;_blank&quot;&gt; stated&lt;/a&gt; &amp;#8220;We have asked the resort to inform us what action they have taken. We  have also requested a formal inquiry into the matter from the police,&amp;#8221;&lt;/p&gt;&lt;/blockquote&gt;
+
+
+&lt;p&gt;The Maldive countries currently survive on tourist dollars. A scandal in the tourist sector could be devastating to the region. (I will point out that I started this posting the day the incident went live on BBC, with the idea that the Maldive Government would inact some silly law banning swear words in wedding ceremonies.) But, instead I discover today that the Government decided to &lt;a href=&quot;http://www.smh.com.au/travel/travel-news/infamous-insult-video-leads-maldives-to-change-laws-20101105-17gcd.html&quot; target=&quot;_blank&quot;&gt; ban marriages performed in any language other than the spoken tongue of the marrying couple.&lt;/a&gt; Immediate aims and concerns overshadowing long term goals. &lt;a href=&quot;http://www.haveeru.com.mv/english/details/33243&quot; target=&quot;_blank&quot;&gt;Very short term aims considering some of the response.&lt;/a&gt;&lt;/p&gt;
+
+</description>
+				<pubDate>Fri, 05 Nov 2010 00:00:00 -0400</pubDate>
+				<link>http://www.seamustuohy.com/all/writing/2010/11/05/How-Ridiculous-Laws-Get-Made.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/writing/2010/11/05/How-Ridiculous-Laws-Get-Made.html</guid>
+			</item>
+		
+			<item>
+				<title>Implications of a Petroleum-less Military</title>
+				<description>&lt;p&gt;What are the implications of The American Military Infrastructure going green?&lt;/p&gt;
+
+&lt;p&gt;A new &lt;a href=&quot;http://www.cnas.org/files/documents/publications/CNAS_Working_Paper_EnergyMap_InitialFindings_Burke_Dec2008_1.pdf&quot;&gt;&amp;#8220;Center for a New American Security&amp;#8221; study&lt;/a&gt; aimed at exploring a post-petroleum military makes some great points as to the why, and the how, but only hints at some of the broader repercussions.&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;&amp;#8220;A successful transition away from petroleum will produce financial, operational and strategic gains. Reducing dependence on petroleum will help ensure the long-term ability of the military to carry out its assigned missions — and help ensure the security of the nation&amp;#8230;Finally, moving beyond petroleum will allow DOD to lead in the development of innovative technologies that can benefit the nation more broadly, while signaling to the world that the United States has as innovative and adaptable force.&amp;#8221;&lt;/p&gt;&lt;/blockquote&gt;
+
+
+&lt;p&gt;With petroleum comprising 77% of the DOD&amp;#8217;s energy use ,and the DOD comprising aprox. 80% of the federal governments energy use, the DOD&amp;#8217;s plan to replace petroleum energy use in the military over the next 40 years is going to create a long term market for alternative energy suppliers and researchers. But, how will this open field be distributed among the current system of wealth? Can we take control, through innovation, to pull power away from the companies that have monopolies on energy and distribute it to the people?&lt;/p&gt;
+
+
+
+</description>
+				<pubDate>Mon, 25 Oct 2010 00:00:00 -0400</pubDate>
+				<link>http://www.seamustuohy.com/all/writing/2010/10/25/Implications_of_a_Petroleum-less-Military.html</link>
+				<guid isPermaLink="true">http://www.seamustuohy.com/all/writing/2010/10/25/Implications_of_a_Petroleum-less-Military.html</guid>
+			</item>
+		
+	</channel>
+</rss>
