@@ -1,0 +1,161 @@
+#+STARTUP: showall indent
+#+STARTUP: hidestars
+#+BEGIN_HTML
+---
+layout: post
+title: Automating Collaborative Documentation
+excerpt: An unplanned bivouac on Ben Nevis.
+---
+#+END_HTML
+
+a wealth of documentation, but currently they are profoundly decentralized and challenging for even an advanced user to locate, navigate, and identify as up-to-date and accurate.
+
+Documentation needs to make it easy for users, partners, and future collaborators to consume, update, customize, localize, and translate. More so, truly good documentation does all this automatically and consistently over time leading to an iterative stewardship process instead of a sporadic process of massive re-reading and re-writes.
+
+
+* The components of collaborative documentation
+
+- plain text base
+- easy editing
+- [[http://www.fabriders.net/rrcmdraft-2/][resource creator manifesto]]
+- Publication Pipelines
+
+[[images/blog/automated_documentation/pipeline.svg]]
+
+* The components of automated documentation
+
+- metadata is vital
+- standardization is key
+- You automate the documentation creation workflow, you can't entirely automate the documentation
+
+** Automation
+
+- Test driven documentation
+  - Link checking
+  - Monitoring tool/project end-points for documentation needs
+    - Automating the creation of documentation issue creation on new releases / API changes / etc.
+      - Issues that have project staff check the corresponding documentation sections for where changes occur
+      - github web-hooks
+        - https://developer.github.com/
+        - https://developer.github.com/changes/2015-04-21-organization-hooks-api-finalized/
+      - Meta-Data is really important for these types of things [we talk about it later]
+
+
+- source consumption
+
+  - content
+    - sub-project content consumption
+      - Meta-Data
+        - project descriptions, authors, staff, copyright, etc.
+      - documentation
+        -
+        - NEED documentation standards and stye
+
+  - data
+    - automated graphic construction
+      - doxygen
+      - ditta
+      - dott
+
+  - Code Documentation and API's
+    - literate programming
+    - doxygen, etc.
+    - Infrastructure for providing key-data for users
+      - Tracking the current software state
+        - https://travis-ci.org/
+      - Tracking where users can get software
+
+      - Tracking testing & needs
+        - https://coveralls.io/
+
+
+
+
+  - Mining Communication Channels for Needed Documentation and FAQ's
+    - issue cue's
+    - listserv questions
+      - Commonly users are guided to links to similar questions on a project listserv. This requires expert communicators with historical memory to be available when the question is asked.
+      - Capturing, tagging, etc. the content from list-serv questions into a more easily searchable and filterable "FAQ" will allow even newer members of the community to guide new users to a more generalized answer to their problem.
+    - IRC bots
+
+** Easy Access to content
+
+- Make finding the text easy
+- Seperate the publishing code / content from the text
+  - [[https://developer.github.com/changes/2015-04-21-organization-hooks-api-finalized/
+      - Meta-Data is really important for these types of things [we talk about it later]
+
+
+- source consumption
+
+  - content
+    - sub-project content consumption
+      - Meta-Data
+        - project descriptions, authors, staff, copyright, etc.
+      - documentation
+        -
+        - NEED documentation standards and stye
+
+  - data
+    - automated graphic construction
+      - doxygen
+      - ditta
+      - dott
+
+  - Code Documentation and API's
+    - literate programming
+    - doxygen, etc.
+    - Infrastructure for providing key-data for users
+      - Tracking the current software state
+        - https://travis-ci.org/
+      - Tracking where users can get software
+
+      - Tracking testing & needs
+        - https://coveralls.io/
+
+
+
+
+  - Mining Communication Channels for Needed Documentation and FAQ's
+    - issue cue's
+    - listserv questions
+      - Commonly users are guided to links to similar questions on a project listserv. This requires expert communicators with historical memory to be available when the question is asked.
+      - Capturing, tagging, etc. the content from list-serv questions into a more easily searchable and filterable "FAQ" will allow even newer members of the community to guide new users to a more generalized answer to their problem.
+    - IRC bots
+
+** Easy Access to content
+
+- Make finding the text easy
+- Seperate the publishing code / content from the text
+  - [[https://the-engine-room.github.io/rdf-primer/][Awesome publication]] with content stuck in a [[https://github.com/the-engine-room/rdf-primer][publication program specific repository structure]] makes it difficult for users who are unfamiliar with the publishing platform to contribute content.
+
+- Consistant Long-term URL's
+  - metadata
+
+- Contributor Interface
+  - The rise of Github & The failed promise of git
+    - DONE [[http://www.codersgrid.com/2014/04/07/gitbook-build-your-programming-book-with-interactive-exercises/][GitBook, Build Your Programming Book With Interactive Exercises]]
+    - Review [[http://railsware.com/blog/2014/04/16/creating-books-with-gitbook/][Creating books with GitBook | Railsware Blog]]
+    - Review [[https://felixfan.github.io/rstudy/2014/04/22/gitbook/][Statistics and Programming!]]
+    - Review [[http://cms.chun.pro/post/agZjaHVjbXNyEgsSBFBvc3QiCG0ZYCcmHCE5DA/gitbook][Gitbook - Chu's CMS]]
+
+- Multiple formats
+  - Produce polished content in multiple formats for different types of consumption
+    - plain text
+    - pdf
+    - odt/doc
+    - http
+
+- Raw content
+  - markdown processing
+
+- automating polished content responsibly
+  - Marking versions
+  - documenting changes (version control)
+
+** Producing Publishable Content
+- Putting it all together
+  - Markup/down pre-processors
+  - Creating multiple end-points
+
+- Building published content based on style sheets
