@@ -3,14 +3,14 @@
 #+BEGIN_HTML
 ---
 layout: post
-title: Automating Collaborative Documentation
+title: DocOps: Automating Collaborative Documentation
 excerpt: An unplanned bivouac on Ben Nevis.
 ---
 #+END_HTML
 
 * How does this help us?
 
-Modern day software aided projects often have a wealth of documentation for using the platform and trouble-shooting the problems withing. This exists in formal documentation for the project, and the formal documentation for all its software and hardware dependencies, in-line code documentation, list-serv's, IRC chats, google docs, wiki's, meeting notes, and a variety of other informal methods such as post-its and "just ask Georgia". Sadly most projects documentation is are profoundly decentralized and challenging for even an advanced user to locate, navigate, and identify as up-to-date and accurate. Newer users, who are best positioned to write "new user & installation guides" are even worse off. They have to learn a myriad issue submission, or publication platforms before they can contribute documentation help or edits as well as identify the rarely documented social conventions required to get their submission acted upon. By this time they are no longer new users, and have lost much of the key experience that makes their input so valuable. 
+Modern day software aided projects often have a wealth of documentation for using the platform and trouble-shooting the problems withing. This exists in formal documentation for the project, and the formal documentation for all its software and hardware dependencies, in-line code documentation, list-serv's, IRC chats, google docs, wiki's, meeting notes, and a variety of other informal methods such as post-its and "just ask Georgia". Sadly most projects documentation is are profoundly decentralized and challenging for even an advanced user to locate, navigate, and identify as up-to-date and accurate. Newer users, who are best positioned to write "new user & installation guides" are even worse off. They have to learn a myriad issue submission, or publication platforms before they can contribute documentation help or edits as well as identify the rarely documented social conventions required to get their submission acted upon. By this time they are no longer new users, and have lost much of the key experience that makes their input so valuable.
 
 Documentation needs to make it easy for users, partners, and future collaborators to consume, update, customize, localize, and translate. More so, truly good documentation does all this automatically and consistently over time leading to an iterative stewardship process instead of a sporadic process of massive re-reading and re-writes.
 
@@ -71,14 +71,19 @@ Documentation needs to make it easy for users, partners, and future collaborator
         - https://coveralls.io/
 
 
-
-
   - Mining Communication Channels for Needed Documentation and FAQ's
     - issue cue's
     - listserv questions
       - Commonly users are guided to links to similar questions on a project listserv. This requires expert communicators with historical memory to be available when the question is asked.
       - Capturing, tagging, etc. the content from list-serv questions into a more easily searchable and filterable "FAQ" will allow even newer members of the community to guide new users to a more generalized answer to their problem.
     - IRC bots
+
+  - leveraging your version control system
+    - git-hooks
+      - why use git hooks?
+        - automating meta-data allows for all manner of wonders
+        - automating alerts to previous authors of documentation
+        - automating README table-of-contents, etc.
 
 ** Easy Access to content
 
