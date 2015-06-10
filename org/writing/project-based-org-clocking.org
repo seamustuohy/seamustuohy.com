@@ -1,0 +1,413 @@
+#+STARTUP: showall indent
+#+STARTUP: hidestars
+#+BEGIN_HTML
+---
+layout: post
+title: Automating my projects with org-mode
+excerpt:
+---
+#+END_HTML
+* Colors
+#+BEGIN_SRC emacs-lisp
+(defvar org-todo-colors-status-future "MediumSpringGreen")
+(defvar org-todo-colors-status-current "DarkOrange1")
+(defvar org-todo-colors-status-upcoming "DarkGoldenrod1")
+(defvar org-todo-colors-status-urgent "red1")
+(defvar org-todo-colors-status-completed "DarkTurquoise")
+#+END_SRC
+
+* Projects
+Properties are the core object of my time-tracking system. They are how I organize what I can track time against and do billing with. +Unlike other org systems I want to keep my tasks seperate from my top-level project headers. This will allow me to cleanly seperate my projects from a variety of task files that relate to them.+
+** Project Properties
+#+BEGIN_EXAMPLE
+ *** Project Template
+    :PROPERTIES:
+    :BILLABLE: (t/f) if the project is billable
+    :PERCENT: percent of billable time to use
+    :CATEGORY: the major project code to be used for billing purposes
+    :START_DATE: start date of project
+    :END_DATE: end date of project (when to remove from clocking percent
+    :GLOSSARY: The glossary of the key terms of the project for tagging notes and links
+    :ID:  the UUID of an object
+    :END:
+#+END_EXAMPLE
+
+#+BEGIN_SRC emacs-lisp
+(defvar org-project-project-template
+"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+:CONTACTS:\n:END:
+:PROPERTIES:
+:BILLABLE: %^{Billable?|y|n}
+:PERCENT:
+:CATEGORY: %^{Project Category}
+:START_DATE:
+:END_DATE:
+:GLOSSARY:
+:ID: %(org-id-uuid)
+:END:"
+"Project Template for org-project")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+    (setq org-todo-keyword-faces
+          (append org-todo-keyword-faces
+                  '(("ONGOING" :foreground org-todo-colors-status-current)
+                    ("IDEA" :foreground org-todo-colors-status-future)
+                    ("GLIMMER" :foreground org-todo-colors-status-future)
+                    ("CAPTURE" :foreground org-todo-colors-status-upcoming :weight bold)
+                    ("LIVE" :foreground org-todo-colors-status-upcoming :weight bold)
+                    ("KICKOFF" :foreground org-todo-colors-status-urgent :weight bold)
+                    ("STARTUP" :foreground org-todo-colors-status-current :weight bold)
+                    ("ACTIVE" :foreground org-todo-colors-status-current :weight bold)
+                    ("CLOSEOUT" :foreground org-todo-colors-status-urgent :weight bold)
+                    ("DONE" :foreground org-todo-colors-status-completed)
+                    ("CANCELED" :foreground org-todo-colors-status-completed))
+#+END_SRC
+
+** Project States
+Projects follow a basic set of project stages so that I can keep track of the progression of a project in the future.
+- Ongoing: These are projects that never end. Like fund-raising, administration, etc.
+- Idea: This state is saved for ideas for projects that have not yet gelled into full projects, and have no identified funding opportunity.
+- Glimmer: These are projects that have are more fleshed out, but only have a possible future funding line identified.
+- Capture: These are projects that have an
+- Live: When a RFP has dropped and we are exploring the project.
+- Kickoff:
+- Startup: The actual start up of the project once funding has been received.
+- Active: The actual project management portion of the project.
+- Closeout: The closeout of the project and sunsetting of technical componenets.
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-todo-keywords
+               '(sequence "ONGOING" "IDEA(!)" "GLIMMER(!)" "CAPTURE(!)" "LIVE(!)" "KICKOFF(!)" "STARTUP(!)" "ACTIVE(!)" "CLOSEOUT(!)" "|" "DONE(d!)" "CANCELED(@!)"))
+#+END_SRC
+
+** TODO Adding and Removing Projects
+*** Adding (captuting projects)
+Projects should be stored somewhere. I am going to store them in a central file.
+
+#+BEGIN_SRC emacs-lisp
+(defvar org-project-project-file (true-filename "~/.org/projects.org"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-capture-templates
+        (append org-capture-templates
+                '(("P" "Add a project" entry
+                   (file (file-truename org-project-project-file))
+                   ,org-project-project-template))))
+#+END_SRC
+*** TODO Removing (archiving projects)
+** TODO Identifying active projects
+#+BEGIN_SRC emacs-lisp
+    (defun org-projects-get-projects-all ()
+      (org-map-entries (org-entry-get (point) "CATEGORY") t '(org-project-project-file)))
+
+    (defun org-projects-get-projects-current ()
+      (org-map-entries (org-entry-get (point) "CATEGORY") "TODO=ACTIVE|TODO=STARTUP|TODO=CLOSEOUT|TODO=ONGOING" '(org-project-project-file)))
+
+  ; A helm source for my projects
+  ; http://kitchingroup.cheme.cmu.edu/blog/2015/01/24/Anatomy-of-a-helm-source/
+  (setq org-projects-helm-current-projects
+        '((name . "Get current projects using helm.")
+          (candidates . org-projects-get-projects-current)
+          (action . (lambda (candidate)
+                      (message-box "%s" candidate)))))
+
+  (defun prompt-for-current-projects ()
+    (helm :sources '(org-projects-helm-current-projects)))
+#+END_SRC
+
+** TODO Project directories and projectile
+* Tasks
+** Types of tasks
+#+BEGIN_EXAMPLE
+ *** TODO
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :STAGE: The stage of the project to activate this task if it is to be delayed.
+    :END:
+ *** NEXT
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** TASK
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** DONE
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** REPLY
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** CONTACT
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** MEETING
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** WAIT
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** CANCELED
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** SOMEDAY
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+ *** EVENT
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH:
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
+#+END_EXAMPLE
+
+#+BEGIN_SRC emacs-lisp
+(defvar org-project-task-template-task
+"* TASK %?
+:PROPERTIES:
+:CATEGORY: %(prompt-for-current-projects)
+:EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
+:ID: %(org-id-uuid)
+:WITH:
+:AT:
+:STATUS:
+:TYPE:
+:END:"
+"Task Template for org-project")
+
+(defvar org-project-task-template-todo
+"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+:CONTACTS:\n:END:
+:PROPERTIES:
+:BILLABLE: %^{Billable?|y|n}
+:PERCENT:
+:CATEGORY: %^{Project Category}
+:START_DATE:
+:END_DATE:
+:GLOSSARY:
+:ID: %(org-id-uuid)
+:END:"
+"Task Template for org-project")
+
+(defvar org-project-task-template-next
+"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+:CONTACTS:\n:END:
+:PROPERTIES:
+:BILLABLE: %^{Billable?|y|n}
+:PERCENT:
+:CATEGORY: %^{Project Category}
+:START_DATE:
+:END_DATE:
+:GLOSSARY:
+:ID: %(org-id-uuid)
+:END:"
+"Project Template for org-project tasks")
+
+(defvar org-project-task-template-reply
+"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+:CONTACTS:\n:END:
+:PROPERTIES:
+:BILLABLE: %^{Billable?|y|n}
+:PERCENT:
+:CATEGORY: %^{Project Category}
+:START_DATE:
+:END_DATE:
+:GLOSSARY:
+:ID: %(org-id-uuid)
+:END:"
+"Project Template for org-project tasks")
+
+(defvar org-project-task-template-contact
+"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+:CONTACTS:\n:END:
+:PROPERTIES:
+:BILLABLE: %^{Billable?|y|n}
+:PERCENT:
+:CATEGORY: %^{Project Category}
+:START_DATE:
+:END_DATE:
+:GLOSSARY:
+:ID: %(org-id-uuid)
+:END:"
+"Project Template for org-project tasks")
+
+(defvar org-project-task-template-event
+"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+:CONTACTS:\n:END:
+:PROPERTIES:
+:BILLABLE: %^{Billable?|y|n}
+:PERCENT:
+:CATEGORY: %^{Project Category}
+:START_DATE:
+:END_DATE:
+:GLOSSARY:
+:ID: %(org-id-uuid)
+:END:"
+"Project Template for org-project tasks")
+
+(defvar org-project-task-template-wait
+"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+:CONTACTS:\n:END:
+:PROPERTIES:
+:BILLABLE: %^{Billable?|y|n}
+:PERCENT:
+:CATEGORY: %^{Project Category}
+:START_DATE:
+:END_DATE:
+:GLOSSARY:
+:ID: %(org-id-uuid)
+:END:"
+"Project Template for org-project tasks")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+    (setq org-todo-keyword-faces
+          (append org-todo-keyword-faces
+                  '(("TASK" :foreground org-todo-colors-status-current)
+                    ("TODO" :foreground org-todo-colors-status-current)
+                    ("NEXT" :foreground org-todo-colors-status-urgent)
+                    ("REPLY" :foreground org-todo-colors-status-urgent :weight bold)
+                    ("CONTACT" :foreground org-todo-colors-status-current :weight bold)
+                    ("EVENT" :foreground org-todo-colors-status-upcoming :weight bold)
+                    ("WAIT" :foreground org-todo-colors-status-upcoming :weight bold)
+                    ("DONE" :foreground org-todo-colors-status-completed :weight bold)
+                    ("CANCELED" :foreground org-todo-colors-status-completed :weight bold)
+                    ("SOMEDAY" :foreground org-todo-colors-status-completed))
+#+END_SRC
+
+** Task States
+
+Basic Tasks
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-todo-keywords
+               '(sequence "TASK(T)" "TODO(t)" "NEXT(n)" "|" "WAIT(w/!)" "DONE(d!)" "CANCELED(C@!)" "SOMEDAY(/!)"))
+#+END_SRC
+
+Communication Tasks
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-todo-keywords
+               '(sequence "REPLY(r!)" "CONTACT(c!)" "EVENT(e)" "|" "WAIT(w/!)" "DONE(d!)" "CANCELED(C@!)"))
+#+END_SRC
+
+
+* Email
+** TODO Received new message
+*** If encrypted
+**** decrypt for parsing
+*** get projects
+**** get project glossaries
+***** check content and subject for terms
+***** tag to project if found
+**** check from, cc & to for group memebers
+***** tag to project if found
+** TODO Open a message
+*** Create an org entry of the email
+*** Add project category to entry from message tag
+*** Start clocking to the message
+*** Create global variable of message that was opened (so that when we stop clocking we don't have to query the original message that opened the thread)
+*** decrypt message
+** TODO Close a message
+*** If clocking this message,
+**** Stop clocking and close the message.
+*** If not clocking for some reason
+**** Close the message without closing current clock
+** TODO Reply to a message
+*** Create an org-entry for the reply
+**** Add project category to entry from message tag
+**** Temporary ID created and stored in global value list
+*** If adding contacts
+**** helm-contacts uses tags and members of the thread to give a sub-list of probable contacts
+** TODO Send Reply
+*** Check to,cc,bcc contacts
+**** If contact in to,cc,or bcc requires encryption
+***** Encrypt message
+*** Get message ID from server and replace temporary ID with that ID
+*** Stop clocking
+** TODO Close reply without sending
+*** stop clocking
+* Capture
+** TODO prompt for TODO Item
+** TODO Get projects
+** TODO prompt for project
+** TODO Create entry
+** TODO Add project category to entry
+** TODO If capture requires a "with" entry
+*** create helm-contacts list to choose from
+* Contacts
+** TODO Contacts tagged with projects and teams that they are involved in
+** TODO contacts with "encrypt" category force encryption of messages sent to them
