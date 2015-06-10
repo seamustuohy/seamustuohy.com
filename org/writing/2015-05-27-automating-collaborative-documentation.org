@@ -61,6 +61,11 @@ Documentation needs to make it easy for users, partners, and future collaborator
       - documentation
         -
         - NEED documentation standards and stye
+    - object requirements meta-data
+      - Using standardized defininitions of types of documentation to allow tracking of complete and incomplete elements in documentation allows you to automate its inclusion based upon its completeness.
+      - This also allows for automation of styling based upon *where* a markdown object is located, what it is called, and its meta-data instead of having in-line styling.
+      - these requirements allow for logging of changes in the documentation that accurately reflect revision changes based upon the larger documentation elements instead of by file/line of text. "The description of project X has changed instead of /projects/X/description was changed."
+        - This also allows for central logging of changes that occur at various end-points that do not have long-term revision control.
 
   - data
     - automated graphic construction
@@ -95,6 +100,14 @@ Documentation needs to make it easy for users, partners, and future collaborator
         - automating README table-of-contents, etc.
         - automating backup / caching of links (see link caching to avoid dead links to external references)
 
+  - Access controls, security, and distribution of documentation
+    - meta-data based publication controls
+    - building security and authentication into the endpoint collection process
+    - Content creation based upon the level of access of the audience it is to be shared with.
+      - rapid sanitized documentation creation for a less or more privileged audience can be automated through secured end-points that contain more sensitive information and flags at documentation creation time that determine what index items will be added.
+    - Caution/warnings can be added to documents about sharing when sensitivity of atomized documentation increases and therefore the final document should not be shared.
+
+
 ** Easy Access to content
 
 
@@ -113,10 +126,11 @@ Documentation needs to make it easy for users, partners, and future collaborator
         - project descriptions, authors, staff, copyright, etc.
       - documentation
         -
-        - NEED documentation standards and stye
+        - NEED documentation standards and style
 
   - data
     - automated graphic construction
+      - graphing out workflows, content structure, and other information using graphviz markdown to show object relationships in meta-data and object's to include in graphics in index files.
       - http://www.graphviz.org/
       - doxygen - code
 
@@ -140,6 +154,8 @@ Documentation needs to make it easy for users, partners, and future collaborator
       - Commonly users are guided to links to similar questions on a project listserv. This requires expert communicators with historical memory to be available when the question is asked.
       - Capturing, tagging, etc. the content from list-serv questions into a more easily searchable and filterable "FAQ" will allow even newer members of the community to guide new users to a more generalized answer to their problem.
     - IRC bots
+
+
 
 ** Easy Access to content
 
@@ -177,3 +193,5 @@ Documentation needs to make it easy for users, partners, and future collaborator
   - Creating multiple end-points
 
 - Building published content based on style sheets
+
+-
