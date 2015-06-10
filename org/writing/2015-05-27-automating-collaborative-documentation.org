@@ -4,7 +4,7 @@
 ---
 layout: post
 title: DocOps: Automating Collaborative Documentation
-excerpt: An unplanned bivouac on Ben Nevis.
+excerpt: none
 ---
 #+END_HTML
 
@@ -34,6 +34,15 @@ Documentation needs to make it easy for users, partners, and future collaborator
 
 - Test driven documentation
   - Link checking
+  - Link Caching to avoid dead references
+    - Wayback Machines API
+      - https://github.com/elationfoundation/waybackcheck
+    - On-Site Caching
+      - Memento
+        - http://mementoweb.org/depot/native/ia/
+      - Amber
+        - http://amberlink.org/
+
   - Monitoring tool/project end-points for documentation needs
     - Automating the creation of documentation issue creation on new releases / API changes / etc.
       - Issues that have project staff check the corresponding documentation sections for where changes occur
@@ -84,14 +93,17 @@ Documentation needs to make it easy for users, partners, and future collaborator
         - automating meta-data allows for all manner of wonders
         - automating alerts to previous authors of documentation
         - automating README table-of-contents, etc.
+        - automating backup / caching of links (see link caching to avoid dead links to external references)
 
 ** Easy Access to content
+
 
 - Make finding the text easy
 - Seperate the publishing code / content from the text
   - [[https://developer.github.com/changes/2015-04-21-organization-hooks-api-finalized/
       - Meta-Data is really important for these types of things [we talk about it later]
-
+- indexibility
+  - semantic enforcement
 
 - source consumption
 
@@ -105,9 +117,8 @@ Documentation needs to make it easy for users, partners, and future collaborator
 
   - data
     - automated graphic construction
-      - doxygen
-      - ditta
-      - dott
+      - http://www.graphviz.org/
+      - doxygen - code
 
   - Code Documentation and API's
     - literate programming
