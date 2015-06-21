@@ -33,19 +33,23 @@ Properties are the core object of my time-tracking system. They are how I organi
 #+END_EXAMPLE
 
 #+BEGIN_SRC emacs-lisp
-(defvar org-project-project-template
-"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
-:CONTACTS:\n:END:
-:PROPERTIES:
-:BILLABLE: %^{Billable?|y|n}
-:PERCENT:
-:CATEGORY: %^{Project Category}
-:START_DATE:
-:END_DATE:
-:GLOSSARY:
-:ID: %(org-id-uuid)
-:END:"
-"Project Template for org-project")
+  (defvar org-project-project-template
+  "* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
+  :CONTACTS:\n:END:
+  :LOGBOOK:
+  - State \"CREATED\"       from \"NONE\"       %U
+  :END:
+  :PROPERTIES:
+  :BILLABLE: %^{Billable?|y|n}
+  :PERCENT:
+  :CATEGORY: %^{Project Category}
+  :START_DATE:
+  :END_DATE:
+  :GLOSSARY:
+  :ID: %(org-id-uuid)
+  :TYPE: project
+  :END:"
+  "Project Template for org-project")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -119,9 +123,35 @@ Projects should be stored somewhere. I am going to store them in a central file.
 
 ** TODO Project directories and projectile
 * Tasks
+** Task helpers
+*** TODO Completion funtion for :ASSIGNED: and others
+Use the below as a seed!
+#+BEGIN_SRC emacs-lisp
+(defun org-contacts-for-complete-function (&optional start)
+  "Function used in `completion-at-point-functions' in `message-mode'."
+  ;; Avoid to complete in `post-command-hook'.
+  (when completion-in-region-mode
+    (remove-hook 'post-command-hook #'completion-in-region--postch))
+  (let ((mail-abbrev-mode-regexp
+         "^\\(Resent-To\\|To\\|B?Cc\\|Reply-To\\|From\\|Mail-Followup-To\\|Mail-Copies-To\\|Disposition-Notification-To\\|Return-Receipt-To\\):"))
+    (when (mail-abbrev-in-expansion-header-p)
+      (lexical-let*
+          ((end (point))
+           (start (or start
+                      (save-excursion
+                        (re-search-backward "\\(\\`\\|[\n:,]\\)[ \t]*")
+                        (goto-char (match-end 0))
+                        (point))))
+           (string (buffer-substring start end)))
+        (run-hook-with-args-until-success
+         'org-contacts-complete-functions start end string)))))
+#+END_SRC
+
 ** Types of tasks
+
 #+BEGIN_EXAMPLE
  *** TODO
+    SCHEDULED: <2015-06-19 Fri> DEADLINE: <2015-06-19 Fri>
     :PROPERTIES:
     :CATEGORY: the major project code to be used for billing purposes
     :ID:  the UUID of an object
@@ -132,7 +162,8 @@ Projects should be stored somewhere. I am going to store them in a central file.
     :TYPE:
     :STAGE: The stage of the project to activate this task if it is to be delayed.
     :END:
- *** NEXT
+ *** ACTIVE
+    SCHEDULED: <2015-06-19 Fri> DEADLINE: <2015-06-19 Fri>
     :PROPERTIES:
     :CATEGORY: the major project code to be used for billing purposes
     :ID:  the UUID of an object
@@ -142,47 +173,8 @@ Projects should be stored somewhere. I am going to store them in a central file.
     :STATUS:
     :TYPE:
     :END:
- *** TASK
-    :PROPERTIES:
-    :CATEGORY: the major project code to be used for billing purposes
-    :ID:  the UUID of an object
-    :WITH:
-    :AT:
-    :EFFORT:
-    :STATUS:
-    :TYPE:
-    :END:
- *** DONE
-    :PROPERTIES:
-    :CATEGORY: the major project code to be used for billing purposes
-    :ID:  the UUID of an object
-    :WITH:
-    :AT:
-    :EFFORT:
-    :STATUS:
-    :TYPE:
-    :END:
- *** REPLY
-    :PROPERTIES:
-    :CATEGORY: the major project code to be used for billing purposes
-    :ID:  the UUID of an object
-    :WITH:
-    :AT:
-    :EFFORT:
-    :STATUS:
-    :TYPE:
-    :END:
- *** CONTACT
-    :PROPERTIES:
-    :CATEGORY: the major project code to be used for billing purposes
-    :ID:  the UUID of an object
-    :WITH:
-    :AT:
-    :EFFORT:
-    :STATUS:
-    :TYPE:
-    :END:
- *** MEETING
+ *** CLOSED
+    SCHEDULED: <2015-06-19 Fri> DEADLINE: <2015-06-19 Fri>
     :PROPERTIES:
     :CATEGORY: the major project code to be used for billing purposes
     :ID:  the UUID of an object
@@ -202,26 +194,102 @@ Projects should be stored somewhere. I am going to store them in a central file.
     :STATUS:
     :TYPE:
     :END:
- *** CANCELED
-    :PROPERTIES:
-    :CATEGORY: the major project code to be used for billing purposes
-    :ID:  the UUID of an object
-    :WITH:
-    :AT:
-    :EFFORT:
-    :STATUS:
-    :TYPE:
-    :END:
- *** SOMEDAY
-    :PROPERTIES:
-    :CATEGORY: the major project code to be used for billing purposes
-    :ID:  the UUID of an object
-    :WITH:
-    :AT:
-    :EFFORT:
-    :STATUS:
-    :TYPE:
-    :END:
+#+END_EXAMPLE
+
+#+BEGIN_SRC emacs-lisp
+  (defvar org-project-task-template-todo
+  "* TODO %?
+  :LOGBOOK:
+  - State \"CREATED\"       from \"NONE\"       %U
+  :END:
+  :PROPERTIES:
+  :CATEGORY: %(prompt-for-current-projects)
+  :EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
+  :ID: %(org-id-uuid)
+  :ASSIGNED:
+  :IMPORTANCE:
+  :URGENCY:
+  :WITH:
+  :AT:
+  :STATUS:
+  :TYPE: task
+  :END:"
+  "TODO Template for org-project")
+
+  (defvar org-project-task-template-active
+  "* ACTIVE %?
+  :LOGBOOK:
+  - State \"CREATED\"       from \"NONE\"       %U
+  :END:
+  :PROPERTIES:
+  :CATEGORY: %(prompt-for-current-projects)
+  :EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
+  :ID: %(org-id-uuid)
+  :ASSIGNED:
+  :IMPORTANCE:
+  :URGENCY:
+  :WITH:
+  :AT:
+  :STATUS:
+  :TYPE:
+  :END:"
+  "ACTIVE Template for org-project")
+
+  (defvar org-project-task-template-wait
+  "* WAIT %?
+  :LOGBOOK:
+  - State \"CREATED\"       from \"NONE\"       %U
+  :END:
+  :PROPERTIES:
+  :CATEGORY: %(prompt-for-current-projects)
+  :EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
+  :ID: %(org-id-uuid)
+  :ASSIGNED:
+  :IMPORTANCE:
+  :URGENCY:
+  :FOR: %(org-project-helm-prompt-for-org-contact)
+  :STATUS:
+  :TYPE: task
+  :END:"
+  "WAITING Template for org-project")
+
+  (defvar org-project-task-template-closed
+  "* CLOSED %?
+  :PROPERTIES:
+  :CATEGORY: %(prompt-for-current-projects)
+  :EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
+  :ID: %(org-id-uuid)
+  :ASSIGNED:
+  :IMPORTANCE:
+  :URGENCY:
+  :WITH:
+  :AT:
+  :STATUS: %^{STATUS|DONE|SOMEDAY|CANCELED|FAILED} %?
+  :TYPE: task
+  :END:"
+  "CLOSED Template for org-project")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq org-todo-keyword-faces
+        (append org-todo-keyword-faces
+                '(("TODO" :foreground org-todo-colors-status-urgent)
+                  ("ACTIVE" :foreground org-todo-colors-status-current)
+                  ("WAIT" :foreground org-todo-colors-status-upcoming :weight bold)
+                  ("CLOSED" :foreground org-todo-colors-status-completed :weight bold))))
+#+END_SRC
+
+** Task States
+
+Basic Tasks
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'org-todo-keywords
+               '(sequence "TODO(t)" "ACTIVE(a)" "WAIT(w/!)" "|" "CLOSED(c!)"))
+#+END_SRC
+
+* Events
+#+BEGIN_EXAMPLE
  *** EVENT
     :PROPERTIES:
     :CATEGORY: the major project code to be used for billing purposes
@@ -232,138 +300,57 @@ Projects should be stored somewhere. I am going to store them in a central file.
     :STATUS:
     :TYPE:
     :END:
+ *** MEET about TASK
+    :PROPERTIES:
+    :CATEGORY: the major project code to be used for billing purposes
+    :ID:  the UUID of an object
+    :WITH: [CONTACT(s)]
+    :AT:
+    :EFFORT:
+    :STATUS:
+    :TYPE:
+    :END:
 #+END_EXAMPLE
 
+
 #+BEGIN_SRC emacs-lisp
-(defvar org-project-task-template-task
-"* TASK %?
-:PROPERTIES:
-:CATEGORY: %(prompt-for-current-projects)
-:EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
-:ID: %(org-id-uuid)
-:WITH:
-:AT:
-:STATUS:
-:TYPE:
-:END:"
-"Task Template for org-project")
+  (defvar org-project-task-template-meet
+  "* ACTIVE MEET about %?
+  :PROPERTIES:
+  :CATEGORY: %(prompt-for-current-projects)
+  :EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
+  :ID: %(org-id-uuid)
+  :ASSIGNED:
+  :IMPORTANCE:
+  :URGENCY:
+  :WITH: %(org-project-helm-prompt-for-org-contact)
+  :STATUS:
+  :TYPE: event
+  :END:"
+  "Task Template for org-project")
 
-(defvar org-project-task-template-todo
-"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
-:CONTACTS:\n:END:
-:PROPERTIES:
-:BILLABLE: %^{Billable?|y|n}
-:PERCENT:
-:CATEGORY: %^{Project Category}
-:START_DATE:
-:END_DATE:
-:GLOSSARY:
-:ID: %(org-id-uuid)
-:END:"
-"Task Template for org-project")
-
-(defvar org-project-task-template-next
-"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
-:CONTACTS:\n:END:
-:PROPERTIES:
-:BILLABLE: %^{Billable?|y|n}
-:PERCENT:
-:CATEGORY: %^{Project Category}
-:START_DATE:
-:END_DATE:
-:GLOSSARY:
-:ID: %(org-id-uuid)
-:END:"
-"Project Template for org-project tasks")
-
-(defvar org-project-task-template-reply
-"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
-:CONTACTS:\n:END:
-:PROPERTIES:
-:BILLABLE: %^{Billable?|y|n}
-:PERCENT:
-:CATEGORY: %^{Project Category}
-:START_DATE:
-:END_DATE:
-:GLOSSARY:
-:ID: %(org-id-uuid)
-:END:"
-"Project Template for org-project tasks")
-
-(defvar org-project-task-template-contact
-"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
-:CONTACTS:\n:END:
-:PROPERTIES:
-:BILLABLE: %^{Billable?|y|n}
-:PERCENT:
-:CATEGORY: %^{Project Category}
-:START_DATE:
-:END_DATE:
-:GLOSSARY:
-:ID: %(org-id-uuid)
-:END:"
-"Project Template for org-project tasks")
-
-(defvar org-project-task-template-event
-"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
-:CONTACTS:\n:END:
-:PROPERTIES:
-:BILLABLE: %^{Billable?|y|n}
-:PERCENT:
-:CATEGORY: %^{Project Category}
-:START_DATE:
-:END_DATE:
-:GLOSSARY:
-:ID: %(org-id-uuid)
-:END:"
-"Project Template for org-project tasks")
-
-(defvar org-project-task-template-wait
-"* %^{Project Stage|ONGOING|IDEA|GLIMMER|CAPTURE|LIVE|KICKOFF|STARTUP|ACTIVE|CLOSEOUT|DONE|CANCELED} %?
-:CONTACTS:\n:END:
-:PROPERTIES:
-:BILLABLE: %^{Billable?|y|n}
-:PERCENT:
-:CATEGORY: %^{Project Category}
-:START_DATE:
-:END_DATE:
-:GLOSSARY:
-:ID: %(org-id-uuid)
-:END:"
-"Project Template for org-project tasks")
+  (defvar org-project-task-template-event
+  "* TODO EVENT
+   SCHEDULED:  %^t
+  :PROPERTIES:
+  :CATEGORY: %(prompt-for-current-projects)
+  :EFFORT: %^{effort|1:00|0:05|0:15|0:30|2:00|4:00}
+  :ID: %(org-id-uuid)
+  :ASSIGNED:
+  :IMPORTANCE:
+  :URGENCY:
+  :WITH:
+  :STATUS:
+  :TYPE: event
+  :END:"
+  "Task Template for org-project")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
     (setq org-todo-keyword-faces
           (append org-todo-keyword-faces
-                  '(("TASK" :foreground org-todo-colors-status-current)
-                    ("TODO" :foreground org-todo-colors-status-current)
-                    ("NEXT" :foreground org-todo-colors-status-urgent)
-                    ("REPLY" :foreground org-todo-colors-status-urgent :weight bold)
-                    ("CONTACT" :foreground org-todo-colors-status-current :weight bold)
-                    ("EVENT" :foreground org-todo-colors-status-upcoming :weight bold)
-                    ("WAIT" :foreground org-todo-colors-status-upcoming :weight bold)
-                    ("DONE" :foreground org-todo-colors-status-completed :weight bold)
-                    ("CANCELED" :foreground org-todo-colors-status-completed :weight bold)
-                    ("SOMEDAY" :foreground org-todo-colors-status-completed))
+                  '(("EVENT" :foreground org-todo-colors-status-upcoming :weight bold))))
 #+END_SRC
-
-** Task States
-
-Basic Tasks
-
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'org-todo-keywords
-               '(sequence "TASK(T)" "TODO(t)" "NEXT(n)" "|" "WAIT(w/!)" "DONE(d!)" "CANCELED(C@!)" "SOMEDAY(/!)"))
-#+END_SRC
-
-Communication Tasks
-
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'org-todo-keywords
-               '(sequence "REPLY(r!)" "CONTACT(c!)" "EVENT(e)" "|" "WAIT(w/!)" "DONE(d!)" "CANCELED(C@!)"))
-#+END_SRC
-
 
 * Email
 ** TODO Received new message
@@ -409,5 +396,39 @@ Communication Tasks
 ** TODO If capture requires a "with" entry
 *** create helm-contacts list to choose from
 * Contacts
+** Helm Search for contacts
+This searches the org-contacts file and returns the name of the contact.
+#+BEGIN_SRC emacs-lisp
+    (defun org-projects-helm-get-contacts ()
+      (org-map-entries '(let ((email (org-entry-get (point) "EMAIL"))
+                              (name (nth 4 (org-heading-components))))
+                          (cons (concat name " ( " email " ) ") name)) t '(org-contacts-files)))
+
+      (setq org-projects-helm-current-contacts
+              `((name . "Helm capture for Org-Contacts")
+                (candidates . org-projects-helm-get-contacts)
+                (action . (lambda (candidate)
+                            (helm-marked-candidates)))))
+
+      (defun helm-prompt-for-current-org-contact ()
+            (interactive)
+            (helm :sources '(org-projects-helm-current-contacts)))
+#+END_SRC
+*** TODO How do I use helm in capture templates
+This is just a quick function to remind me that I have to figure out how to use helm in capture templates.
+#+BEGIN_SRC emacs-lisp
+  (defun org-project-task-template-contacts-test ()
+      (interactive)
+      (format "* TODO DELETE THIS TEST
+    SCHEDULED: %t
+    :PROPERTIES:
+    :CONTACTS: %s
+    :TYPE: test
+    :END:" (mapconcat 'identity (prompt-for-current-org-contact) ", ")))
+
+  (defun org-projects-get-clean-contacts-list ()
+              (mapconcat 'identity (prompt-for-current-org-contact) ", "))
+#+END_SRC
+
 ** TODO Contacts tagged with projects and teams that they are involved in
 ** TODO contacts with "encrypt" category force encryption of messages sent to them

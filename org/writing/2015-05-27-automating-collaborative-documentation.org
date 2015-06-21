@@ -14,15 +14,132 @@ Modern day software aided projects often have a wealth of documentation for usin
 
 Documentation needs to make it easy for users, partners, and future collaborators to consume, update, customize, localize, and translate. More so, truly good documentation does all this automatically and consistently over time leading to an iterative stewardship process instead of a sporadic process of massive re-reading and re-writes.
 
+- http://www.australiancurriculum.edu.au/static/docs/Benefits%20of%20a%20Machine%20Readable%20Curricula.pdf
+
+* Sample Workflow
+
+This sample workflow attempts to show how a documentation operations workflow can be used to create complex multi-source publications in a robust reproducible manner.
+
+** Content Creation
+*** standardization
+Determine standards for document creation so that it can be consumed and cleaned automatically
+*** creation
+initial creation of sources
+*** meta-data addition
+Using various automated and human process' to add meta-data to internally created sources.
+**** attribution
+Proper attribution and licensing of sources needs to be added to sources in an accessible way so that they can be used externally.
+**** access controls
+Documentation needs to be tagged for levels of release if there is content that is not to be distributed to certain parties.
+*** verification
+- Internally created sources need to be verified as good, and accurate through editing, peer review, etc.
+- Sources need to be verified as having proper access controls for release.
+** Document specification
+*** Mapping
+The sources that the document will be created from need to be identified,
+*** Transformation specification
+The method for transforming sources into a consistent format needs to be specified
+*** Pattern specification
+Publication/Design patterns need to be created and assigned to specific publication objects. (e.g. object->latex transformations)
+*** Workflow Creation
+Workflow events, alerts, roles, and checks need to be determined and put into the automation pipeline to streamline human intervention.
+** Collection
+*** extraction
+External and internal sources need to be extracted and placed into a central location
+*** archiving
+All sources should be archived in their raw format so that historical documents can be verified both internally and independently. This also allows for continued use of external content that becomes unavailable.
+*** cleaning
+Non-standardized content needs to be cleaned for use.
+*** Attribution and access control
+Content should be tagged with proper attribution and access control flags
+*** verifying
+Sources should be checked through automated means to ensure that they contained the requested content. This is where archived sources could be automatically pulled in for non-temporal content and where alerts would need to be created and human intervention possibly required to address missing or malformed content.
+** Aggregation
+*** transformation
+Sources will have their content transformed to a standardized medium and structure.
+*** mapping
+All source objects will be linked to a global document map.
+*** verifying
+At this point the map can be checked through an automated means to ensure that it has all the sources that it needs to output any document required of it.
+*** merging
+A single standardized source will be created from the global map of content.
+*** attribution and access control
+Multi-Source attribution and access control flags will be applied to all objects that are created to ensure that publication pipelines do not misuse or mis-attribute content.
+*** archiving
+The core map should be archived at this point. This will allow for quick iteration on publication maps and transformation and the easy creation of one-off documents without re-aggregating content.
+** Publication
+*** access control
+If ANY sensitive or internal documents are created using the same publication system as external documents publication should have clear allowable content and access level controls.
+*** mapping
+Publication end-points will need to have maps that describe the output document/file/repository structure in relationship to the single-source map created during aggregation and the patterns specified in the document specification section.
+*** transforming
+Sources will be aggregated into a single object as defined by the publication map and then transformed using the patterns defined in the publication map.
+*** verification
+The final output should be verified using automated testing as well as through human review.
+*** archiving
+The final published outputs should be archived for externally facing archival and support purposes.
+
 
 * The components of collaborative documentation
 
-- plain text base
-- easy editing
-- [[http://www.fabriders.net/rrcmdraft-2/][resource creator manifesto]]
-- Publication Pipelines
+** Make content easy to edit for those outside the core publishing pipeline
+
+
+** Publication Pipelines
+  - http://sempublishing.sourceforge.net/
+  - Workflow / process
+    - http://www.essepuntato.it/lode/http://purl.org/spar/pwo
+  - People
+    - http://www.essepuntato.it/lode/http://purl.org/spar/pro
+  - Document management
+    - http://www.essepuntato.it/lode/http://purl.org/spar/pso
+  - Document Creation
+    - [[http://lov.okfn.org/dataset/lov/vocabs/pdo][Project Documents Ontology]]
 
 [[images/blog/automated_documentation/pipeline.svg]]
+
+** Aggregation and Re-Use
+
+- Make content available and repurposeable
+  - [[http://www.fabriders.net/rrcmdraft-2/][resource creator manifesto]]
+  - [[http://www.w3.org/TR/2014/NOTE-ld-bp-20140109/][Best Practices for Publishing Linked Data]]
+
+- aggregate content from elsewhere
+  - [[https://www.openarchives.org/ore/][Open Archives Initiative Object Reuse and Exchange]]
+  - [[http://guava.iis.sinica.edu.tw/r4r][Relations for Reusing (R4R) Ontology]]
+  - Responsible usage
+    - [[http://lov.okfn.org/dataset/lov/vocabs/opmo][The Open Provenance Model]] is a model of provenance that is designed to meet the following requirements: (1) To allow provenance information to be exchanged between systems, by means of a compatibility layer based on a shared provenance model. (2) To allow developers to build and share tools that operate on such a provenance model. (3) To define provenance in a precise, technology-agnostic manner. (4) To support a digital representation of provenance for any 'thing', whether produced by computer systems or not. (5) To allow multiple levels of description to coexist. (6) To define a core set of rules that identify the valid inferences that can be made on provenance representation.
+    - [[http://lov.okfn.org/dataset/lov/vocabs/opmv][OPMV, the Open Provenance Model Vocabulary, provides terms to enable practitioners of data publishing to publish their data responsibly.]]
+
+
+** Documentation Choreography
+- Service Choreography
+- http://www.w3.org/TR/ws-cdl-10/
+ - Goals
+   - More specifically, the goals of the WS-CDL specification are to permit:
+
+   - Reusability. The same choreography definition is usable by different participants operating in different contexts (industry, locale, etc.) with different software (e.g. application software)
+
+   - Cooperation. Choreographies define the sequence of exchanging messages between two (or more) independent participants or processes by describing how they should cooperate
+
+   - Multi-Party Collaboration. Choreographies can be defined involving any number of participants or processes
+
+   - Semantics. Choreographies can include human-readable documentation and semantics for all the components in the choreography
+
+   - Composability. Existing choreographies can be combined to form new choreographies that may be reused in different contexts
+
+   - Modularity. Choreographies can be defined using an "inclusion" facility that allows a choreography to be created from parts contained in several different choreographies
+
+   - Information Driven Collaboration. Choreographies describe how participants make progress within a collaboration, through the recording of exchanged information and changes to observable information that cause ordering constraints to be fulfilled and progress to be made
+
+   - Information Alignment. Choreographies allow the participants that take part in choreographies to communicate and synchronize their observable information
+
+   - Exception Handling. Choreographies can define how exceptional or unusual conditions that occur while the choreography is performed are handled
+
+   - Transactionality. The processes or participants that take part in a choreography can work in a "transactional" way with the ability to coordinate the outcome of the long-lived collaborations, which include multiple participants, each with their own, non-observable business rules and goals
+
+
+
 
 * The components of automated documentation
 
@@ -34,6 +151,7 @@ Documentation needs to make it easy for users, partners, and future collaborator
 
 - Test driven documentation
   - Link checking
+    - https://github.com/gajus/deadlink
   - Link Caching to avoid dead references
     - Wayback Machines API
       - https://github.com/elationfoundation/waybackcheck
@@ -100,33 +218,24 @@ Documentation needs to make it easy for users, partners, and future collaborator
         - automating README table-of-contents, etc.
         - automating backup / caching of links (see link caching to avoid dead links to external references)
 
-  - Access controls, security, and distribution of documentation
-    - meta-data based publication controls
-    - building security and authentication into the endpoint collection process
-    - Content creation based upon the level of access of the audience it is to be shared with.
-      - rapid sanitized documentation creation for a less or more privileged audience can be automated through secured end-points that contain more sensitive information and flags at documentation creation time that determine what index items will be added.
-    - Caution/warnings can be added to documents about sharing when sensitivity of atomized documentation increases and therefore the final document should not be shared.
-
-
 ** Easy Access to content
 
-
 - Make finding the text easy
-- Seperate the publishing code / content from the text
+- Seperate the publishing code / templates from the text
   - [[https://developer.github.com/changes/2015-04-21-organization-hooks-api-finalized/
       - Meta-Data is really important for these types of things [we talk about it later]
 - indexibility
   - semantic enforcement
 
 - source consumption
+  - Multi-Source Publication
+    - content
+      - sub-project content consumption
+        - Meta-Data
+          - project descriptions, authors, staff, copyright, etc.
+        - documentation
+          - NEED documentation standards and style
 
-  - content
-    - sub-project content consumption
-      - Meta-Data
-        - project descriptions, authors, staff, copyright, etc.
-      - documentation
-        -
-        - NEED documentation standards and style
 
   - data
     - automated graphic construction
@@ -146,8 +255,6 @@ Documentation needs to make it easy for users, partners, and future collaborator
         - https://coveralls.io/
 
 
-
-
   - Mining Communication Channels for Needed Documentation and FAQ's
     - issue cue's
     - listserv questions
@@ -157,7 +264,7 @@ Documentation needs to make it easy for users, partners, and future collaborator
 
 
 
-** Easy Access to content
+** Access to content
 
 - Make finding the text easy
 - Seperate the publishing code / content from the text
@@ -187,11 +294,26 @@ Documentation needs to make it easy for users, partners, and future collaborator
   - Marking versions
   - documenting changes (version control)
 
+- Access controls, security, and distribution of documentation
+  - If ANY sensitive or internal documents are created using the same publication system as external documents publication should have clear allowable content and access level controls.
+  - This allows externally facing documents to be created using the same templates as internally facing documents with different access controls specified.
+  - This reduces document duplication and helps to ensure that ALL documentation is updated when a change is made to the documentation back-end.
+  - meta-data based publication controls
+  - building security and authentication into the endpoint collection process
+  - Content creation based upon the level of access of the audience it is to be shared with.
+      - rapid sanitized documentation creation for a less or more privileged audience can be automated through secured end-points that contain more sensitive information and flags at documentation creation time that determine what index items will be added.
+  - Caution/warnings can be added to documents about sharing when sensitivity of atomized documentation increases and therefore the final document should not be shared.
+
+
 ** Producing Publishable Content
 - Putting it all together
   - Markup/down pre-processors
-  - Creating multiple end-points
+    - https://pythonhosted.org/Markdown/extensions/api.html
+    - https://github.com/jreese/markdown-pp
+    - https://github.com/gajus/gitdown#features-find-dead-urls-and-fragment-identifiers
 
-- Building published content based on style sheets
+  - Creating multiple end-points
+    - [[https://en.wikipedia.org/wiki/Single_source_publishing][Single source publishing]]
+    - Building published content based on style sheets
 
 -
