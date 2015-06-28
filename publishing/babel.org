@@ -1,0 +1,5 @@
+#+BABEL: :tangle yes :noweb yes
+#+NAME: alltags
+#+BEGIN_SRC emacs-lisp :exports none
+(org-get-buffer-tags)
+#+END_SRC

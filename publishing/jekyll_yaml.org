@@ -1,0 +1,8 @@
+{{{htmlbegin}}}
+{{{YAML}}}
+title: {{{title}}}
+tags: {{{tags}}}
+layout: {{{layout}}}
+date: {{{date}}}
+{{{YAML}}}
+{{{htmlend}}}

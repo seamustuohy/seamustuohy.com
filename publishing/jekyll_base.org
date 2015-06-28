@@ -1,0 +1,8 @@
+#+NAME: alltags
+#+OPTIONS: toc:nil num:nil
+#+MACRO: tags (eval (mapconcat (function (lambda(x) (car x))) (org-get-buffer-tags) " "))
+#+MACRO: YAML ---
+#+MACRO: htmlbegin #+BEGIN_HTML
+#+MACRO: htmlend #+END_HTML
+#+STARTUP: showall indent
+#+STARTUP: hidestars
